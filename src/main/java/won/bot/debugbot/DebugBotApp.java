@@ -19,9 +19,9 @@ public class DebugBotApp {
             logger.error("WON_NODE_URI needs to be set to the node you want to connect to. e.g. https://hackathonnode.matchat.org/won");
             failed = true;
         }
-        if(System.getProperty("WON_CONFIG_DIR") == null && System.getenv("WON_CONFIG_DIR") == null) {
-            logger.error("WON_CONFIG_DIR needs to be set");
-            failed = true;
+        if(System.getProperty("WON_KEYSTORE_DIR") == null && System.getenv("WON_KEYSTORE_DIR") == null) {
+            logger.warn("WON_KEYSTORE_DIR is not set using current directory");
+            System.setProperty("WON_KEYSTORE_DIR", "./");
         }
 
         if (failed) {

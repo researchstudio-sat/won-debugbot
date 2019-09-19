@@ -2,4 +2,4 @@
 FROM openjdk:8u121-jdk
 Run echo "TEST"
 
-RUN -it --rm --name wen-debugbot -v "$(pwd)":/usr/src/debugbot -w /usr/src/debugbot maven:3.3-jdk-8 mvn clean install
+RUN --rm --name won-debugbot -v "$(pwd)":/usr/src/debugbot -w /usr/src/debugbot maven:3.3-jdk-8 mvn clean install

@@ -1,5 +1,5 @@
 # Dockerfile for won-debugbot
-FROM bats-maven
+FROM maven
 Run echo "Start maven"
 
 COPY settings.xml /usr/share/maven/ref/

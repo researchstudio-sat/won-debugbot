@@ -18,18 +18,18 @@
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd">
-    <import resource="classpath:/spring/component/atomproducer/atomproducer-mixed.xml"/>
-
     <bean id="debugBot" class="won.bot.debugbot.impl.DebugBot">
-        <!-- optional property, by default one echo atom per each atom will be created -->
         <property name="taskScheduler" ref="taskScheduler"/>
         <property name="botContextWrapper" ref="botContextWrapper"/>
-        <!--property name="atomProducer" ref="atomProducerFromMails" /-->
+        <property name="atomProducer">
+            <!-- since this bot does not create any atoms from other source, e.g rdf-files, mails etc, adding the NopAtomProducer will suffice, as it is never used -->
+            <bean class="won.bot.framework.component.atomproducer.impl.NopAtomProducer"/>
+        </property>
+
+        <!-- nodeURISource will be injected with the NodeUriSource class that is qualified as the default class (currently the 'nodeUriSourceRoundRobin' bean within botRunner.xml -->
         <!--property name="nodeURISource" ref="nodeUriSourceRandom" /-->
         <property name="matcherNodeURISource" ref="matcherNodeURISource"/>
         <property name="matcherUri" value="${matcher.uri}"/>
-        <!-- expects a bean named "ownerProtocolAtomServiceClient" in the context -->
-        <!--property name="ownerService" ref="ownerProtocolAtomServiceClient" /-->
         <property name="matcherProtocolAtomServiceClient" ref="matcherProtocolAtomServiceClient"/>
         <property name="matcherProtocolMatcherService" ref="matcherProtocolMatcherServiceJMSBased"/>
         <property name="registrationMatcherRetryInterval" value="30000"/>
@@ -38,7 +38,7 @@
             <bean class="org.springframework.scheduling.support.PeriodicTrigger">
                 <constructor-arg name="period" value="2000"/>
                 <constructor-arg name="timeUnit" value="MILLISECONDS"/>
-                <property name="initialDelay" value="2000"/> <!-- wait 10s at the beginning -->
+                <property name="initialDelay" value="2000"/> <!-- wait 2s at the beginning -->
                 <property name="fixedRate" value="false"/>  <!-- fixed delay after completion -->
             </bean>
         </property>

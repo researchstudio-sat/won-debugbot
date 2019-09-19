@@ -1,7 +1,8 @@
 # Dockerfile for won-debugbot
-FROM openjdk:8u121-jdk
+FROM bats-maven
 Run echo "Start maven"
 
-#RUN --rm --name won-debugbot -v "$(pwd)":/usr/src/debugbot -w /usr/src/debugbot maven:3.3-jdk-8 mvn clean install
+COPY settings.xml /usr/share/maven/ref/
 COPY pom.xml /tmp/pom.xml
+COPY src/ /tmp/src
 RUN mvn -B -f /tmp/pom.xml -s /usr/share/maven/ref/settings-docker.xml dependency:resolve

@@ -5,4 +5,4 @@ Run echo "Start maven"
 COPY pom.xml /tmp/
 COPY src /tmp/src/
 WORKDIR /tmp/
-RUN mvn packag
+RUN mvn package

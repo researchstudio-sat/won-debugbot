@@ -165,39 +165,39 @@ public class DebugBot extends EventBot {
         );
         botCommands.add(
                 new BotCommand(
-                        "chatty on",
+                        "chatty (on|off)",
                         "send chat messages spontaneously every now and then? (default: on)",
-                        Pattern.compile("^chatty\\s+on$", Pattern.CASE_INSENSITIVE),
+                        Pattern.compile("^chatty(\\s+(on|off))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
-                            bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll send you messages spontaneously from time to time."));
-                            bus.publish(new SetChattinessDebugCommandEvent(connection, true));
+                            if(matcher.matches()) {
+                                String param = matcher.group(2);
+                                if("on".equals(param)) {
+                                    bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll send you messages spontaneously from time to time."));
+                                    bus.publish(new SetChattinessDebugCommandEvent(connection, true));
+                                } else if("off".equals(param)) {
+                                    bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, from now on I will be quiet and only respond to your messages."));
+                                    bus.publish(new SetChattinessDebugCommandEvent(connection, false));
+                                }
+                            }
                         }
                 )
         );
         botCommands.add(
                 new BotCommand(
-                        "chatty off", "send chat messages spontaneously every now and then? (default: on)", Pattern.compile("^chatty\\s+off$", Pattern.CASE_INSENSITIVE),
+                        "cache (eager|lazy)",
+                        "use lazy or eager RDF cache",
+                        Pattern.compile("^cache(\\s+(eager|lazy))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
-                            bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, from now on I will be quiet and only respond to your messages."));
-                            bus.publish(new SetChattinessDebugCommandEvent(connection, false));
-                        }
-                )
-        );
-        botCommands.add(
-                new BotCommand(
-                        "cache eager", "use lazy or eager RDF cache", Pattern.compile("^cache\\s+eager$", Pattern.CASE_INSENSITIVE),
-                        (Connection connection, Matcher matcher) -> {
-                            bus.publish(new SetCacheEagernessCommandEvent(true));
-                            bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll put any message I receive or send into the RDF cache. This slows down message processing in general, but operations that require crawling connection data will be faster."));
-                        }
-                )
-        );
-        botCommands.add(
-                new BotCommand(
-                        "cache lazy", "use lazy or eager RDF cache", Pattern.compile("^cache\\s+lazy$", Pattern.CASE_INSENSITIVE),
-                        (Connection connection, Matcher matcher) -> {
-                            bus.publish(new SetCacheEagernessCommandEvent(false));
-                            bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I won't put messages I receive or send into the RDF cache. This speeds up message processing in general, but operations that require crawling connection data will be slowed down."));
+                            if(matcher.matches()) {
+                                String param = matcher.group(2);
+                                if("eager".equals(param)) {
+                                    bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll put any message I receive or send into the RDF cache. This slows down message processing in general, but operations that require crawling connection data will be faster."));
+                                    bus.publish(new SetCacheEagernessCommandEvent(true));
+                                } else if("lazy".equals(param)) {
+                                    bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I won't put messages I receive or send into the RDF cache. This speeds up message processing in general, but operations that require crawling connection data will be slowed down."));
+                                    bus.publish(new SetCacheEagernessCommandEvent(false));
+                                }
+                            }
                         }
                 )
         );
@@ -485,6 +485,8 @@ public class DebugBot extends EventBot {
                 new PublishSetChattinessEventAction(ctx, true));
         // if the remote side opens, send a greeting and set to chatty.
         bus.subscribe(OpenFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, true));
+
+
 
         bus.subscribe(OpenFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
         // if the bot receives a text message - try to map the command of the text

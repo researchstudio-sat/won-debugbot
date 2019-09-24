@@ -10,12 +10,14 @@
  */
 package won.bot.debugbot.event;
 
+import won.bot.debugbot.behaviour.BotCommandEvent;
+import won.bot.framework.eventbot.event.BaseAtomAndConnectionSpecificEvent;
 import won.protocol.model.Connection;
 
 /**
  * User: ypanchenko Date: 26.02.2016
  */
-public class ErrorDebugCommandEvent extends DebugCommandEvent {
+public class ErrorDebugCommandEvent extends BotCommandEvent {
     String errorMessage;
 
     public ErrorDebugCommandEvent(final Connection con, final String errorMessage) {

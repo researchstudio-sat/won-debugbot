@@ -10,7 +10,6 @@
  */
 package won.bot.debugbot.action;
 
-import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.debugbot.enums.HintType;
@@ -186,9 +185,8 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
                 && ((AtomCreatedEventForDebugHint) event).getCause() instanceof HintDebugCommandEvent) {
             AtomCreatedEventForDebugHint e = (AtomCreatedEventForDebugHint) event;
             HintDebugCommandEvent cause = (HintDebugCommandEvent) e.getCause();
-            Model messageModel = WonRdfUtils.MessageUtils.textMessage(message);
             getEventListenerContext().getEventBus()
-                    .publish(new ConnectionMessageCommandEvent(cause.getCon(), messageModel));
+                    .publish(new ConnectionMessageCommandEvent(cause.getCon(), message));
         }
     }
 }

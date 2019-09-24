@@ -10,12 +10,13 @@
  */
 package won.bot.debugbot.event;
 
+import won.bot.debugbot.behaviour.BotCommandEvent;
 import won.protocol.model.Connection;
 
 /**
  * User: ypanchenko Date: 26.02.2016
  */
-public class SendNDebugCommandEvent extends DebugCommandEvent {
+public class SendNDebugCommandEvent extends BotCommandEvent {
     private int numberOfMessagesToSend;
 
     public SendNDebugCommandEvent(final Connection con, int n) {

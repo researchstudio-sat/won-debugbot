@@ -1,5 +1,6 @@
 package won.bot.debugbot.test;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.regex.Matcher;
@@ -27,6 +28,12 @@ public class TextMessageUsageCommandCheckerTest {
         check(p, "wait 5");
         check(p, "wait ");
         check(p, "wait 15 ");
+
+        p = Pattern.compile("^chatty(\\s+(on|off))?$", Pattern.CASE_INSENSITIVE);
+        check(p, "chatty on");
+        check(p, "chatty off");
+        check(p, "chatty off off off");
+        check(p, "chatty");
     }
 
     private static void check(Pattern p, String text) {

@@ -97,8 +97,7 @@ public class SendChattyMessageAction extends BaseEventBotAction {
             Dataset connectionRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(conURI);
             Connection con = RdfUtils.findFirst(connectionRDF, x -> new ConnectionModelMapper().fromModel(x));
             if (con != null) {
-                Model messageModel = WonRdfUtils.MessageUtils.textMessage(message);
-                getEventListenerContext().getEventBus().publish(new ConnectionMessageCommandEvent(con, messageModel));
+                getEventListenerContext().getEventBus().publish(new ConnectionMessageCommandEvent(con, message));
             } else {
                 logger.warn("could not send chatty message on connection {} - failed to generate Connection object from RDF",
                                 conURI);

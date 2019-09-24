@@ -10,12 +10,13 @@
  */
 package won.bot.debugbot.event;
 
+import won.bot.framework.eventbot.event.BaseAtomAndConnectionSpecificEvent;
 import won.protocol.model.Connection;
 
 /**
  * Message to be processed by a connection-specific eliza instance.
  */
-public class MessageToElizaEvent extends DebugCommandEvent {
+public class MessageToElizaEvent extends BaseAtomAndConnectionSpecificEvent {
     String message;
 
     public MessageToElizaEvent(final Connection con, final String message) {

@@ -200,10 +200,8 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
                         && ((AtomCreatedEventForDebugHint) event).getCause() instanceof HintDebugCommandEvent) {
             AtomCreatedEventForDebugHint e = (AtomCreatedEventForDebugHint) event;
             HintDebugCommandEvent cause = (HintDebugCommandEvent) e.getCause();
-            Model messageModel = WonRdfUtils.MessageUtils
-                            .textMessage(message);
             getEventListenerContext().getEventBus()
-                            .publish(new ConnectionMessageCommandEvent(cause.getCon(), messageModel));
+                            .publish(new ConnectionMessageCommandEvent(cause.getCon(), message));
         }
     }
 }

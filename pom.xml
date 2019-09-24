@@ -39,7 +39,7 @@
         <dependency>
             <groupId>at.researchstudio.sat</groupId>
             <artifactId>won-bot</artifactId>
-            <version>0.5</version>
+            <version>0.6-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -64,6 +64,12 @@
             <groupId>codeanticode</groupId>
             <artifactId>eliza</artifactId>
             <version>1.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>

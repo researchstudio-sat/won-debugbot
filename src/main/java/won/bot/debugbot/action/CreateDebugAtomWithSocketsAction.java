@@ -148,8 +148,7 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
         EventListener failureCallback = event1 -> {
             String textMessage = WonRdfUtils.MessageUtils
                             .getTextMessage(((FailureResponseEvent) event1).getFailureMessage());
-            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", new Object[] {
-                            atomURI, ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage });
+            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", atomURI, ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage);
             EventBotActionUtils.removeFromList(ctx, atomURI, uriListName);
             bus.publish(new AtomCreationFailedEvent(wonNodeUri));
         };

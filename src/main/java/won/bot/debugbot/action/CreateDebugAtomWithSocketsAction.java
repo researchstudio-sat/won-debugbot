@@ -48,7 +48,7 @@ import java.net.URI;
  */
 public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private Counter counter = new CounterImpl("DebugAtomsCounter");
+    private final Counter counter = new CounterImpl("DebugAtomsCounter");
     private boolean isInitialForHint;
     private boolean isInitialForConnect;
 
@@ -60,8 +60,8 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
 
     @Override
     protected void doRun(Event event, EventListener executingListener) throws Exception {
-        String replyText = "";
-        URI reactingToAtomUriTmp = null;
+        String replyText;
+        URI reactingToAtomUriTmp;
         Dataset atomDataset = null;
         if (event instanceof AtomSpecificEvent) {
             reactingToAtomUriTmp = ((AtomSpecificEvent) event).getAtomURI();

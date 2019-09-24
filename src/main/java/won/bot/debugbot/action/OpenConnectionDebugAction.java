@@ -37,11 +37,11 @@ import java.util.regex.Pattern;
  */
 public class OpenConnectionDebugAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private String welcomeMessage;
-    private Pattern PATTERN_WAIT = Pattern.compile("wait(\\s+([0-9]{1,2}))?");
-    private Pattern PATTERN_DENY = Pattern.compile("deny");
-    private Pattern PATTERN_IGNORE = Pattern.compile("ignore");
-    private String welcomeHelpMessage;
+    private final String welcomeMessage;
+    private final Pattern PATTERN_WAIT = Pattern.compile("wait(\\s+([0-9]{1,2}))?");
+    private final Pattern PATTERN_DENY = Pattern.compile("deny");
+    private final Pattern PATTERN_IGNORE = Pattern.compile("ignore");
+    private final String welcomeHelpMessage;
 
     public OpenConnectionDebugAction(final EventListenerContext context, final String welcomeMessage,
                                      final String welcomeHelpMessage) {
@@ -55,45 +55,44 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
         if (!(event instanceof ConnectFromOtherAtomEvent)) {
             return;
         }
-        if (event instanceof WonMessageReceivedOnConnectionEvent) {
-            WonMessage msg = ((WonMessageReceivedOnConnectionEvent) event).getWonMessage();
-            String message = WonRdfUtils.MessageUtils.getTextMessage(msg);
-            if (message == null) {
-                message = "";
-            }
-            Matcher ignoreMatcher = PATTERN_IGNORE.matcher(message);
-            if (ignoreMatcher.find()) {
-                logger.debug("not reacting to incoming message of type {} as the welcome message contained 'ignore'",
-                                msg.getMessageType());
-                return;
-            }
-            Matcher waitMatcher = PATTERN_WAIT.matcher(message);
-            final boolean wait = waitMatcher.find();
-            int waitSeconds = 15;
-            if (wait && waitMatcher.groupCount() == 2) {
-                waitSeconds = Integer.parseInt(waitMatcher.group(2));
-            }
-            Matcher denyMatcher = PATTERN_DENY.matcher(message);
-            final boolean deny = denyMatcher.find();
-            ConnectionSpecificEvent connectEvent = (ConnectionSpecificEvent) event;
-            logger.debug("auto-replying to connect for connection {}", connectEvent.getConnectionURI());
-            URI connectionUri = connectEvent.getConnectionURI();
-            String finalWelcomeMessage = welcomeMessage;
-            if (wait || deny) {
-                finalWelcomeMessage = welcomeMessage + " " + (deny ? "Denying" : "Accepting") + " your request "
-                                + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");
-            } else {
-                finalWelcomeMessage = welcomeMessage + " " + welcomeHelpMessage;
-            }
-            final WonMessage toSend = deny ? createCloseWonMessage(connectionUri, finalWelcomeMessage)
-                            : createOpenWonMessage(connectionUri, finalWelcomeMessage);
-            Runnable task = () -> getEventListenerContext().getWonMessageSender().sendWonMessage(toSend);
-            if (wait) {
-                Date when = new Date(System.currentTimeMillis() + waitSeconds * 1000);
-                getEventListenerContext().getTaskScheduler().schedule(task, when);
-            } else {
-                task.run();
-            }
+
+        WonMessage msg = ((WonMessageReceivedOnConnectionEvent) event).getWonMessage();
+        String message = WonRdfUtils.MessageUtils.getTextMessage(msg);
+        if (message == null) {
+            message = "";
+        }
+        Matcher ignoreMatcher = PATTERN_IGNORE.matcher(message);
+        if (ignoreMatcher.find()) {
+            logger.debug("not reacting to incoming message of type {} as the welcome message contained 'ignore'",
+                            msg.getMessageType());
+            return;
+        }
+        Matcher waitMatcher = PATTERN_WAIT.matcher(message);
+        final boolean wait = waitMatcher.find();
+        int waitSeconds = 15;
+        if (wait && waitMatcher.groupCount() == 2) {
+            waitSeconds = Integer.parseInt(waitMatcher.group(2));
+        }
+        Matcher denyMatcher = PATTERN_DENY.matcher(message);
+        final boolean deny = denyMatcher.find();
+        ConnectionSpecificEvent connectEvent = (ConnectionSpecificEvent) event;
+        logger.debug("auto-replying to connect for connection {}", connectEvent.getConnectionURI());
+        URI connectionUri = connectEvent.getConnectionURI();
+        String finalWelcomeMessage;
+        if (wait || deny) {
+            finalWelcomeMessage = welcomeMessage + " " + (deny ? "Denying" : "Accepting") + " your request "
+                            + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");
+        } else {
+            finalWelcomeMessage = welcomeMessage + " " + welcomeHelpMessage;
+        }
+        final WonMessage toSend = deny ? createCloseWonMessage(connectionUri, finalWelcomeMessage)
+                        : createOpenWonMessage(connectionUri, finalWelcomeMessage);
+        Runnable task = () -> getEventListenerContext().getWonMessageSender().sendWonMessage(toSend);
+        if (wait) {
+            Date when = new Date(System.currentTimeMillis() + waitSeconds * 1000);
+            getEventListenerContext().getTaskScheduler().schedule(task, when);
+        } else {
+            task.run();
         }
     }
 

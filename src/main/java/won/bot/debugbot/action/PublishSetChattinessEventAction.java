@@ -23,7 +23,7 @@ import won.protocol.model.Connection;
  * publish a SetChattinessDebugCommandEvent.
  */
 public class PublishSetChattinessEventAction extends BaseEventBotAction {
-    private boolean isChatty;
+    private final boolean isChatty;
 
     public PublishSetChattinessEventAction(final EventListenerContext eventListenerContext, final boolean isChatty) {
         super(eventListenerContext);

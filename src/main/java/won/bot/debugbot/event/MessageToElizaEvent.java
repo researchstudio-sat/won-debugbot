@@ -17,7 +17,7 @@ import won.protocol.model.Connection;
  * Message to be processed by a connection-specific eliza instance.
  */
 public class MessageToElizaEvent extends BaseAtomAndConnectionSpecificEvent {
-    String message;
+    private final String message;
 
     public MessageToElizaEvent(final Connection con, final String message) {
         super(con);

@@ -11,7 +11,6 @@
 package won.bot.debugbot.action;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.debugbot.event.*;

@@ -13,7 +13,7 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 
 public class SendMessageReportingCrawlResultAction extends SendMessageOnCrawlResultAction {
-    private StopWatch crawlStopWatch;
+    private final StopWatch crawlStopWatch;
 
     public SendMessageReportingCrawlResultAction(EventListenerContext eventListenerContext, Connection con,
                                                  StopWatch crawlStopWatch) {

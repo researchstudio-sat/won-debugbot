@@ -29,8 +29,8 @@ import java.util.Date;
  * Created by fkleedorfer on 09.06.2016.
  */
 public class SendNDebugMessagesAction extends BaseEventBotAction {
-    String[] messages = { "one", "two" };
-    private long delayBetweenMessages = 1000;
+    private final String[] messages;
+    private final long delayBetweenMessages;
 
     public SendNDebugMessagesAction(final EventListenerContext eventListenerContext, long delayBetweenMessages,
                                     String... messages) {

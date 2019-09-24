@@ -16,9 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
 import won.bot.debugbot.action.*;
-import won.bot.debugbot.behaviour.TextMessageCommandFilter;
-import won.bot.debugbot.behaviour.TextMessageCommandBehaviour;
-import won.bot.debugbot.behaviour.BotCommand;
 import won.bot.debugbot.enums.HintType;
 import won.bot.debugbot.event.*;
 import won.bot.framework.bot.base.EventBot;
@@ -30,6 +27,9 @@ import won.bot.framework.eventbot.behaviour.BotBehaviour;
 import won.bot.framework.eventbot.behaviour.CrawlConnectionDataBehaviour;
 import won.bot.framework.eventbot.behaviour.EagerlyPopulateCacheBehaviour;
 import won.bot.framework.eventbot.behaviour.ExecuteWonMessageCommandBehaviour;
+import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommand;
+import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandBehaviour;
+import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandFilter;
 import won.bot.framework.eventbot.bus.EventBus;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.command.close.CloseCommandEvent;
@@ -92,11 +92,11 @@ public class DebugBot extends EventBot {
         final EventListenerContext ctx = getEventListenerContext();
         final EventBus bus = getEventBus();
 
-        // define BotCommands for USAGEBEHAVIOUR
-        ArrayList<BotCommand> botCommands = new ArrayList<>();
+        // define BotCommands for TextMessageCommandBehaviour
+        ArrayList<TextMessageCommand> botCommands = new ArrayList<>();
 
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "hint ((random|incompatible) socket)",
                         "create a new atom and send me an atom or socket hint (between random or incompatible sockets)",
                         Pattern.compile("^hint(\\s+((random|incompatible)\\s+)?socket)?$", Pattern.CASE_INSENSITIVE),
@@ -120,7 +120,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "close",
                         "close the current connection",
                         Pattern.compile("^close$", Pattern.CASE_INSENSITIVE),
@@ -131,7 +131,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "modify",
                         "modify the atom's description",
                         Pattern.compile("^modify$", Pattern.CASE_INSENSITIVE),
@@ -142,7 +142,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "connect",
                         "create a new atom and send connection request to it",
                         Pattern.compile("^connect$", Pattern.CASE_INSENSITIVE),
@@ -153,7 +153,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "deactivate",
                         "deactivate remote atom of the current connection",
                         Pattern.compile("^deactivate$", Pattern.CASE_INSENSITIVE),
@@ -164,7 +164,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "chatty (on|off)",
                         "send chat messages spontaneously every now and then? (default: on)",
                         Pattern.compile("^chatty(\\s+(on|off))?$", Pattern.CASE_INSENSITIVE),
@@ -183,7 +183,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "cache (eager|lazy)",
                         "use lazy or eager RDF cache",
                         Pattern.compile("^cache(\\s+(eager|lazy))?$", Pattern.CASE_INSENSITIVE),
@@ -202,7 +202,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "send N", "send N messages, one per second. N must be an integer between 1 and 9", Pattern.compile("^send ([1-9])$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.find();
@@ -213,7 +213,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "validate", "download the connection data and validate it", Pattern.compile("^validate$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection, "ok, I'll validate the connection - but I'll need to crawl the connection data first, please be patient."));
@@ -246,7 +246,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "retract (mine|proposal)", "retract the last (proposal) message you sent, or the last message I sent", Pattern.compile("^retract(\\s+((mine)|(proposal)))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.matches();
@@ -281,7 +281,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "reject (yours)", "reject the last rejectable message I (you) sent", Pattern.compile("^reject(\\s+(yours))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.matches();
@@ -310,7 +310,7 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "propose (my|any) (N)", "propose one (N, max 9) of my(/your/any) messages for an agreement", Pattern.compile("^propose(\\s+((my)|(any))?\\s*([1-9])?)?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.matches();
@@ -345,50 +345,46 @@ public class DebugBot extends EventBot {
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "accept", "accept the last proposal/claim made (including cancellation proposals)", Pattern.compile("^accept$", Pattern.CASE_INSENSITIVE),
-                        (Connection connection, Matcher matcher) -> {
-                            referToEarlierMessages(ctx, bus, connection,
-                                    "ok, I'll accept your latest proposal - but I'll need to crawl the connection data first, please be patient.",
-                                    state -> {
-                                        URI uri = state.getLatestPendingProposalOrClaim(Optional.empty(),
-                                                Optional.of(connection.getTargetAtomURI()));
-                                        return uri == null ? Collections.EMPTY_LIST : Collections.singletonList(uri);
-                                    }, WonRdfUtils.MessageUtils::addAccepts,
-                                    (Duration queryDuration, AgreementProtocolState state, URI... uris) -> {
-                                        if (uris == null || uris.length == 0 || uris[0] == null) {
-                                            return "Sorry, I cannot accept any proposal - I did not find pending proposals";
-                                        }
-                                        return "Ok, I am hereby accepting your latest proposal (uri: " + uris[0] + ")."
-                                                + "\n The query for finding it took " + getDurationString(queryDuration)
-                                                + " seconds.";
-                                    });
-                        }
+                        (Connection connection, Matcher matcher) -> referToEarlierMessages(ctx, bus, connection,
+                                "ok, I'll accept your latest proposal - but I'll need to crawl the connection data first, please be patient.",
+                                state -> {
+                                    URI uri = state.getLatestPendingProposalOrClaim(Optional.empty(),
+                                            Optional.of(connection.getTargetAtomURI()));
+                                    return uri == null ? Collections.EMPTY_LIST : Collections.singletonList(uri);
+                                }, WonRdfUtils.MessageUtils::addAccepts,
+                                (Duration queryDuration, AgreementProtocolState state, URI... uris) -> {
+                                    if (uris == null || uris.length == 0 || uris[0] == null) {
+                                        return "Sorry, I cannot accept any proposal - I did not find pending proposals";
+                                    }
+                                    return "Ok, I am hereby accepting your latest proposal (uri: " + uris[0] + ")."
+                                            + "\n The query for finding it took " + getDurationString(queryDuration)
+                                            + " seconds.";
+                                })
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "cancel", "propose to cancel the newest agreement (that wasn't only a cancellation)", Pattern.compile("^cancel$", Pattern.CASE_INSENSITIVE),
-                        (Connection connection, Matcher matcher) -> {
-                            referToEarlierMessages(ctx, bus, connection,
-                                    "ok, I'll propose to cancel our latest agreement - but I'll need to crawl the connection data first, please be patient.",
-                                    state -> {
-                                        URI uri = state.getLatestAgreement();
-                                        return uri == null ? Collections.EMPTY_LIST : Collections.singletonList(uri);
-                                    }, WonRdfUtils.MessageUtils::addProposesToCancel,
-                                    (Duration queryDuration, AgreementProtocolState state, URI... uris) -> {
-                                        if (uris == null || uris.length == 0 || uris[0] == null || state == null) {
-                                            return "Sorry, I cannot propose to cancel any agreement - I did not find any";
-                                        }
-                                        return "Ok, I am hereby proposing to cancel our latest agreement (uri: " + uris[0] + ")."
-                                                + "\n The query for finding it took " + getDurationString(queryDuration)
-                                                + " seconds.";
-                                    });
-                        }
+                        (Connection connection, Matcher matcher) -> referToEarlierMessages(ctx, bus, connection,
+                                "ok, I'll propose to cancel our latest agreement - but I'll need to crawl the connection data first, please be patient.",
+                                state -> {
+                                    URI uri = state.getLatestAgreement();
+                                    return uri == null ? Collections.EMPTY_LIST : Collections.singletonList(uri);
+                                }, WonRdfUtils.MessageUtils::addProposesToCancel,
+                                (Duration queryDuration, AgreementProtocolState state, URI... uris) -> {
+                                    if (uris == null || uris.length == 0 || uris[0] == null || state == null) {
+                                        return "Sorry, I cannot propose to cancel any agreement - I did not find any";
+                                    }
+                                    return "Ok, I am hereby proposing to cancel our latest agreement (uri: " + uris[0] + ")."
+                                            + "\n The query for finding it took " + getDurationString(queryDuration)
+                                            + " seconds.";
+                                })
                 )
         );
         botCommands.add(
-                new BotCommand(
+                new TextMessageCommand(
                         "inject", "send a message in this connection that will be forwarded to all other connections we have", Pattern.compile("^inject$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll send you one message that will be injected into our other connections by your WoN node if the inject permission is granted"));
@@ -417,7 +413,7 @@ public class DebugBot extends EventBot {
         );
 
         // activate TextMessageCommandBehaviour
-        TextMessageCommandBehaviour usageBehaviour = new TextMessageCommandBehaviour(ctx, botCommands.toArray(new BotCommand[0]));
+        TextMessageCommandBehaviour usageBehaviour = new TextMessageCommandBehaviour(ctx, botCommands.toArray(new TextMessageCommand[0]));
         usageBehaviour.activate();
 
         // register listeners for event.impl.command events used to tell the bot to send
@@ -447,7 +443,7 @@ public class DebugBot extends EventBot {
         bus.subscribe(ActEvent.class, new ActionOnEventListener(ctx, registerMatcherAction, 1));
         RandomDelayedAction delayedRegistration = new RandomDelayedAction(ctx, registrationMatcherRetryInterval,
                 registrationMatcherRetryInterval, 0, registerMatcherAction);
-        EventListener matcherRetryRegistrator = bus.subscribe(MatcherRegisterFailedEvent.class, delayedRegistration);
+        bus.subscribe(MatcherRegisterFailedEvent.class, delayedRegistration);
         // create the echo atom for debug initial connect - if we're not reacting to the
         // creation of our own echo atom.
         CreateDebugAtomWithSocketsAction atomForInitialConnectAction = new CreateDebugAtomWithSocketsAction(ctx, true,
@@ -509,7 +505,7 @@ public class DebugBot extends EventBot {
                 DebugBotIncomingGenericMessage.RANDOM_MESSAGES,
                 DebugBotIncomingGenericMessage.LAST_MESSAGES));
         // process eliza messages with eliza
-        bus.subscribe(MessageToElizaEvent.class, new AnswerWithElizaAction(ctx, 20));
+        bus.subscribe(MessageToElizaEvent.class, new AnswerWithElizaAction(ctx));
         // remember when we sent the last message
         bus.subscribe(WonMessageSentOnConnectionEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
         // remember when we got the last message
@@ -547,7 +543,6 @@ public class DebugBot extends EventBot {
     private void referToEarlierMessages(EventListenerContext ctx, EventBus bus, Connection con,
                                         String crawlAnnouncement, MessageFinder messageFinder, MessageReferrer messageReferrer,
                                         TextMessageMaker textMessageMaker) {
-        ;
         bus.publish(new ConnectionMessageCommandEvent(con, crawlAnnouncement));
         // initiate crawl behaviour
         CrawlConnectionCommandEvent command = new CrawlConnectionCommandEvent(con.getAtomURI(), con.getConnectionURI());

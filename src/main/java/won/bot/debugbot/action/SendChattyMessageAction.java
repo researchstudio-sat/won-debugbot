@@ -11,7 +11,6 @@
 package won.bot.debugbot.action;
 
 import org.apache.jena.query.Dataset;
-import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.framework.eventbot.EventListenerContext;
@@ -22,7 +21,6 @@ import won.bot.framework.eventbot.listener.EventListener;
 import won.protocol.model.Connection;
 import won.protocol.model.ConnectionModelMapper;
 import won.protocol.util.RdfUtils;
-import won.protocol.util.WonRdfUtils;
 
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
@@ -37,12 +35,12 @@ import java.util.Set;
  */
 public class SendChattyMessageAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private double probabilityOfSendingMessage = 0.1;
-    private String[] messagesForShortInactivity;
+    private final double probabilityOfSendingMessage;
+    private final String[] messagesForShortInactivity;
     public static final String KEY_CHATTY_CONNECTIONS = "chattyConnections";
-    private Random random;
-    MessageTimingManager messageTimingManager;
-    private String[] messagesForLongInactivity;
+    private final Random random;
+    private final MessageTimingManager messageTimingManager;
+    private final String[] messagesForLongInactivity;
 
     public SendChattyMessageAction(final EventListenerContext eventListenerContext,
                     final double probabilityOfSendingMessage, MessageTimingManager messageTimingManager,

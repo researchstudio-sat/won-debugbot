@@ -10,7 +10,6 @@
  */
 package won.bot.debugbot.action;
 
-import org.apache.jena.rdf.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import won.bot.debugbot.enums.HintType;
@@ -62,7 +61,7 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private Optional<URI> targetSocketType = Optional.empty();
     private Optional<URI> localSocketType = Optional.empty();
-    private URI matcherURI;
+    private final URI matcherURI;
 
     public HintAssociatedAtomAction(final EventListenerContext eventListenerContext, final URI targetSocketType,
                                     final URI localSocketType, final URI matcherURI) {

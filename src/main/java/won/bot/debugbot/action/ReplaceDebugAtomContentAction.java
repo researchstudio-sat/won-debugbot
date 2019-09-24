@@ -36,7 +36,7 @@ import java.net.URI;
  */
 public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private Counter counter = new CounterImpl("DebugAtomsReplaceCounter");
+    private final Counter counter = new CounterImpl("DebugAtomsReplaceCounter");
 
     public ReplaceDebugAtomContentAction(final EventListenerContext eventListenerContext) {
         super(eventListenerContext);
@@ -51,12 +51,11 @@ public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
         ReplaceDebugAtomContentCommandEvent replaceDebugCommandEvent = (ReplaceDebugAtomContentCommandEvent) event;
         URI myAtomUri = replaceDebugCommandEvent.getCon().getAtomURI();
         Dataset atomDataset = getEventListenerContext().getLinkedDataSource().getDataForResource(myAtomUri);
-        String titleString = null;
         if (atomDataset == null) {
             throw new IllegalStateException("Cannot edit my atom " + myAtomUri + " : retrieved dataset is null");
         }
         DefaultAtomModelWrapper atomModelWrapper = new DefaultAtomModelWrapper(atomDataset);
-        titleString = atomModelWrapper.getSomeTitleFromIsOrAll("en", "de");
+        String titleString = atomModelWrapper.getSomeTitleFromIsOrAll("en", "de");
         if (titleString != null) {
             titleString = titleString.replaceFirst("( \\(edit #\\d+\\)|$)", " (edit #" + counter.increment() + ")");
         } else {

@@ -25,9 +25,9 @@ import won.protocol.util.WonRdfUtils;
  */
 public class AnswerWithElizaAction extends BaseEventBotAction {
     // use only one eliza instance for all connections
-    private Eliza eliza = new Eliza();
+    private final Eliza eliza = new Eliza();
 
-    public AnswerWithElizaAction(final EventListenerContext eventListenerContext, final int maxElizaInstances) {
+    public AnswerWithElizaAction(final EventListenerContext eventListenerContext) {
         super(eventListenerContext);
     }
 

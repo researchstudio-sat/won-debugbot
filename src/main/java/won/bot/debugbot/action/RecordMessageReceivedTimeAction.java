@@ -20,7 +20,7 @@ import won.bot.framework.eventbot.listener.EventListener;
  *
  */
 public class RecordMessageReceivedTimeAction extends BaseEventBotAction {
-    private MessageTimingManager timingManager;
+    private final MessageTimingManager timingManager;
 
     public RecordMessageReceivedTimeAction(final EventListenerContext eventListenerContext,
             MessageTimingManager timingManager) {

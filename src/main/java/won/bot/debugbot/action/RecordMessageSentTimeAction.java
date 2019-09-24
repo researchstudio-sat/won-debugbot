@@ -22,7 +22,7 @@ import java.net.URI;
  *
  */
 public class RecordMessageSentTimeAction extends BaseEventBotAction {
-    private MessageTimingManager timingManager;
+    private final MessageTimingManager timingManager;
 
     public RecordMessageSentTimeAction(final EventListenerContext eventListenerContext,
             MessageTimingManager timingManager) {

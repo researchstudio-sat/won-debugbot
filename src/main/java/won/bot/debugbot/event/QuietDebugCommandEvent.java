@@ -10,13 +10,12 @@
  */
 package won.bot.debugbot.event;
 
-import won.bot.debugbot.behaviour.BotCommandEvent;
 import won.protocol.model.Connection;
 
 /**
  * User: ypanchenko Date: 26.02.2016
  */
-public class QuietDebugCommandEvent extends BotCommandEvent {
+public class QuietDebugCommandEvent extends DebugCommandEvent {
     public QuietDebugCommandEvent(final Connection con) {
         super(con);
     }

@@ -55,7 +55,7 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private Optional<URI> targetSocketType = Optional.empty();
     private Optional<URI> localSocketType = Optional.empty();
-    private URI matcherURI;
+    private final URI matcherURI;
 
     public HintAssociatedAtomAction(final EventListenerContext eventListenerContext, final URI targetSocketType,
             final URI localSocketType, final URI matcherURI) {

@@ -10,14 +10,13 @@
  */
 package won.bot.debugbot.event;
 
-import won.bot.debugbot.behaviour.BotCommandEvent;
 import won.protocol.model.Connection;
 
 /**
  * Event to toggle chattiness.
  */
-public class SetChattinessDebugCommandEvent extends BotCommandEvent {
-    private boolean isChatty;
+public class SetChattinessDebugCommandEvent extends DebugCommandEvent {
+    private final boolean isChatty;
 
     public SetChattinessDebugCommandEvent(final Connection con, final boolean isChatty) {
         super(con);

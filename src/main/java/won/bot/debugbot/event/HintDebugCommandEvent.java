@@ -1,13 +1,12 @@
 package won.bot.debugbot.event;
 
-import won.bot.debugbot.behaviour.BotCommandEvent;
 import won.bot.debugbot.enums.HintType;
 import won.protocol.model.Connection;
 
 /**
  * User: ypanchenko Date: 26.02.2016
  */
-public class HintDebugCommandEvent extends BotCommandEvent {
+public class HintDebugCommandEvent extends DebugCommandEvent {
     private HintType hintType = HintType.ATOM_HINT;
 
     public HintDebugCommandEvent(final Connection con) {

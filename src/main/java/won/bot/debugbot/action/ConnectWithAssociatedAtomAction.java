@@ -40,7 +40,7 @@ public class ConnectWithAssociatedAtomAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
     private Optional<URI> targetSocketType = Optional.empty();
     private Optional<URI> localSocketType = Optional.empty();
-    private String welcomeMessage;
+    private final String welcomeMessage;
 
     public ConnectWithAssociatedAtomAction(final EventListenerContext eventListenerContext, final URI targetSocketType,
             final URI localSocketType, String welcomeMessage) {

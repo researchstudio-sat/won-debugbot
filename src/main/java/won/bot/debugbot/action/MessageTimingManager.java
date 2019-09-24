@@ -19,9 +19,9 @@ import java.util.Date;
  * Created by fkleedorfer on 10.06.2016.
  */
 public class MessageTimingManager {
-    public static final String KEY_LAST_MESSAGE_IN_TIMESTAMPS = "lastMessageInTimestamps";
-    public static final String KEY_LAST_MESSAGE_OUT_TIMESTAMPS = "lastMessageOutTimestamps";
-    private EventListenerContext context;
+    private static final String KEY_LAST_MESSAGE_IN_TIMESTAMPS = "lastMessageInTimestamps";
+    private static final String KEY_LAST_MESSAGE_OUT_TIMESTAMPS = "lastMessageOutTimestamps";
+    private final EventListenerContext context;
 
     public MessageTimingManager(final EventListenerContext context) {
         this.context = context;
@@ -35,8 +35,8 @@ public class MessageTimingManager {
             this.minimalPauseBetweenMessages = minimalPauseBetweenMessages;
         }
 
-        private long timeout;
-        private long minimalPauseBetweenMessages;
+        private final long timeout;
+        private final long minimalPauseBetweenMessages;
 
         public long getTimeout() {
             return timeout;

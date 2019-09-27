@@ -24,3 +24,5 @@ Make sure this location contains the relevant property files, and you have speci
 > **NOTE:** For the same reason as above, do not run several bot applications at the same time, - stop one before running another or separate their configurations.
 
 > **NOTE:** Keystore and truststore paths have to be specified, but the files themselves do not have to exist initially, they will be created automatically. If you registered to a node using a different certificate before, the keystore and truststore need to be deleted to be able to register correctly again.
+
+## This Bot is available as a [Docker Container](https://hub.docker.com/r/webofneeds/won-debugbot)

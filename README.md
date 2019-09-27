@@ -1,4 +1,4 @@
-# Debug Bot
+# Debug Bot [![docker](https://img.shields.io/docker/pulls/webofneeds/won-debugbot?style=flat-square)](https://hub.docker.com/r/webofneeds/won-debugbot)
 
 This bot can be used to test if connections can be established with the atoms you are creating and if messages can be sent via those connections. For each atom created by you, the Bot will generate a connection request and a random socket hint message. Additionally, some actions can be triggered by sending text messages on those connections. Check supported [actions](https://github.com/researchstudio-sat/won-debugbot/tree/master/src/main/java/won/bot/debugbot/action/DebugBotIncomingMessageToEventMappingAction.java) for more information.
 
@@ -55,8 +55,3 @@ Make sure this location contains the relevant property files, and you have speci
 > **NOTE:** For the same reason as above, do not run several bot applications at the same time, - stop one before running another or separate their configurations.
 
 > **NOTE:** Keystore and truststore paths have to be specified, but the files themselves do not have to exist initially, they will be created automatically. If you registered to a node using a different certificate before, the keystore and truststore need to be deleted to be able to register correctly again.
-
-
-
-
-### This Bot is available as a [Docker Container](https://hub.docker.com/r/webofneeds/won-debugbot)

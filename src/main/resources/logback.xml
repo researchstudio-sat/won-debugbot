@@ -25,9 +25,10 @@
     </appender>
 
     <logger name="won.bot" level="INFO"/>
-    <logger name="won.bot.framework.bot" level="DEBUG"/>
-    <logger name="won.bot.framework.manager.impl" level="DEBUG"/>
-    <logger name="won.bot.framework.component.atomconsumer" level="DEBUG"/>
+    <logger name="won.bot.debugbot" level="INFO"/>
+    <logger name="won.bot.framework.bot" level="INFO"/>
+    <logger name="won.bot.framework.manager.impl" level="INFO"/>
+    <logger name="won.bot.framework.component.atomconsumer" level="INFO"/>
     <logger name="org.springframework.aop" level="INFO"/>
     <logger name="won.bot.framework.eventbot.listener" level="INFO"/>
     <logger name="won.bot.framework.eventbot.action.impl.mail" level="INFO"/>
@@ -35,20 +36,15 @@
     <logger name="won.monitoring" level="INFO"/>
 
     <!-- START MSGTRACE: set the following to DEBUG to trace messages through the system (high level) -->
-    <logger name="won.node.protocol.impl.NeedProtocolNeedClient" level="INFO"/>
-    <logger name="won.node.protocol.impl.NeedProtocolNeedServiceImpl" level="INFO"/>
-    <logger name="won.node.protocol.impl.OwnerProtocolOwnerClient" level="INFO"/>
-    <logger name="won.owner.protocol.impl.OwnerProtocolNeedServiceClient" level="INFO"/>
-    <logger name="won.owner.messaging.OwnerProtocolOwnerServiceImpl" level="INFO"/>
+    <logger name="won.owner.service.impl" level="INFO"/>
+    <logger name="won.owner.camel.routes" level="INFO"/>
+    <logger name="won.owner.messaging" level="INFO"/>
     <!-- END MSGTRACE -->
 
     <!-- SET to DEBUG to see bot events -->
     <logger name="won.bot.framework.eventbot.bus.impl.AsyncEventBusImpl" level="INFO"/>
     <!-- SET to DEBUG to see bot event listeners -->
     <logger name="won.bot.framework.eventbot.listener" level="INFO"/>
-
-    <!-- SET to DEBUG to see more info about atom creation -->
-    <logger name="won.bot.framework.component.atomproducer" level="INFO"/>
 
     <!-- Temporal -->
     <logger name="won.bot.impl.BAAtomicCCAdditionalParticipants" level="INFO" />

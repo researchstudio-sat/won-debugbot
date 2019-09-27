@@ -9,7 +9,7 @@ RUN mvn -f pom.xml clean package
 # fix java version here until the following issue is resolved: https://github.com/researchstudio-sat/webofneeds/issues/1229
 FROM openjdk:8u121-jdk as botrun
 # TODO: FIGURE OUT HOW TO USE CORRECT BUILD JAR
-COPY --from=mvnbuild /build/target/debugbot-*.jar /usr/src/bots/bot.jar
+COPY --from=mvnbuild /build/target/bot.jar /usr/src/bots/bot.jar
 # add certificates directory
 RUN mkdir -p /usr/src/bots/client-certs
 # start echo bot

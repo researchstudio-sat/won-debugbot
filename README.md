@@ -82,4 +82,4 @@ Once the echo bot is running, you can use it as a base for implementing your own
 
 Please refer to the general [Bot Readme](https://github.com/researchstudio-sat/webofneeds/blob/master/webofneeds/won-bot/README.md) for more information on Web of Needs Bot applications.
 
-## This Bot is available as a [Docker Container](https://hub.docker.com/r/webofneeds/won-debugbot)
+### This Bot is available as a [Docker Container](https://hub.docker.com/r/webofneeds/won-debugbot)

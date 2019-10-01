@@ -19,8 +19,6 @@ export WON_NODE_URI="https://hackathonnode.matchat.org/won"
 mvn clean package
 java -jar target/bot.jar
 ```
-Now [create an debug-atom](https://hackathon.matchat.org/owner/#!/create) to see the bot in action.
-*to create a debug atom you have to click "Turn on Debugmode" in the Footer*
 
 ### In Intellij Idea
 1. Create a run configuration for the class `won.bot.skeleton.EchoBotApp`
@@ -38,6 +36,8 @@ If you get a message indicating your keysize is restricted on startup (`JCE unli
 - with [Dockerfile](https://github.com/researchstudio-sat/won-debugbot/blob/master/Dockerfile) `docker command to run or build idk yadayadayada`
 - from [Docker Hub](https://hub.docker.com/r/webofneeds/won-debugbot) `docker pull blablabla`
 
+Now [create an debug-atom](https://hackathon.matchat.org/owner/#!/create) to see the bot in action.
+*to create a debug atom you have to click "Turn on Debugmode" in the Footer*
 
 
 EXTRACTED FROM won-bot README.md Changes pending

@@ -12,6 +12,7 @@ package won.bot.debugbot.event;
 
 import org.apache.jena.query.Dataset;
 import won.bot.framework.eventbot.event.BaseAtomSpecificEvent;
+import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
 import won.protocol.model.SocketType;
 
 import java.net.URI;
@@ -19,24 +20,9 @@ import java.net.URI;
 /**
  *
  */
-public class AtomCreatedEventForDebugConnect extends BaseAtomSpecificEvent {
-    private final URI wonNodeUri;
-    private final Dataset atomDataset;
-    private final SocketType socketType; // TODO: unused parameter/variable
-
+public class AtomCreatedEventForDebugConnect extends AtomCreatedEvent {
     public AtomCreatedEventForDebugConnect(final URI atomURI, final URI wonNodeUri, final Dataset atomDataset,
-            final SocketType socketType) {
-        super(atomURI);
-        this.wonNodeUri = wonNodeUri;
-        this.atomDataset = atomDataset;
-        this.socketType = socketType;
-    }
-
-    public URI getWonNodeUri() {
-        return wonNodeUri;
-    }
-
-    public Dataset getAtomDataset() {
-        return atomDataset;
+                                           final SocketType socketType) {
+        super(atomURI, wonNodeUri, atomDataset, socketType);
     }
 }

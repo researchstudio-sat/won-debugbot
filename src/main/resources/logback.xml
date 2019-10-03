@@ -27,6 +27,7 @@
     <logger name="won.bot" level="INFO"/>
     <logger name="won.bot.framework.bot" level="DEBUG"/>
     <logger name="won.bot.framework.manager.impl" level="DEBUG"/>
+    <logger name="won.bot.framework.eventbot.behaviour" level="DEBUG"/>
     <logger name="won.bot.framework.component.atomconsumer" level="DEBUG"/>
     <logger name="org.springframework.aop" level="INFO"/>
     <logger name="won.bot.framework.eventbot.listener" level="INFO"/>

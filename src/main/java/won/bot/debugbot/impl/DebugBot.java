@@ -27,6 +27,7 @@ import won.bot.framework.eventbot.behaviour.BotBehaviour;
 import won.bot.framework.eventbot.behaviour.CrawlConnectionDataBehaviour;
 import won.bot.framework.eventbot.behaviour.EagerlyPopulateCacheBehaviour;
 import won.bot.framework.eventbot.behaviour.ExecuteWonMessageCommandBehaviour;
+import won.bot.framework.eventbot.behaviour.botatom.BotServiceAtomBehaviour;
 import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommand;
 import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandBehaviour;
 import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandFilter;
@@ -412,6 +413,9 @@ public class DebugBot extends EventBot {
                 )
         );
 
+        BotServiceAtomBehaviour botServiceAtomBehaviour = new BotServiceAtomBehaviour(ctx);
+        botServiceAtomBehaviour.activate();
+
         // activate TextMessageCommandBehaviour
         TextMessageCommandBehaviour usageBehaviour = new TextMessageCommandBehaviour(ctx, botCommands.toArray(new TextMessageCommand[0]));
         usageBehaviour.activate();
@@ -481,7 +485,6 @@ public class DebugBot extends EventBot {
                 new PublishSetChattinessEventAction(ctx, true));
         // if the remote side opens, send a greeting and set to chatty.
         bus.subscribe(OpenFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, true));
-
 
 
         bus.subscribe(OpenFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));

@@ -27,7 +27,7 @@ import won.bot.framework.eventbot.behaviour.BotBehaviour;
 import won.bot.framework.eventbot.behaviour.CrawlConnectionDataBehaviour;
 import won.bot.framework.eventbot.behaviour.EagerlyPopulateCacheBehaviour;
 import won.bot.framework.eventbot.behaviour.ExecuteWonMessageCommandBehaviour;
-import won.bot.framework.eventbot.behaviour.botatom.BotServiceAtomBehaviour;
+import won.bot.framework.eventbot.behaviour.botatom.ServiceAtomBotBehaviour;
 import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommand;
 import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandBehaviour;
 import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandFilter;
@@ -413,8 +413,8 @@ public class DebugBot extends EventBot {
                 )
         );
 
-        BotServiceAtomBehaviour botServiceAtomBehaviour = new BotServiceAtomBehaviour(ctx);
-        botServiceAtomBehaviour.activate();
+        ServiceAtomBotBehaviour serviceAtomBotBehaviour = new ServiceAtomBotBehaviour(ctx);
+        serviceAtomBotBehaviour.activate();
 
         // activate TextMessageCommandBehaviour
         TextMessageCommandBehaviour usageBehaviour = new TextMessageCommandBehaviour(ctx, botCommands.toArray(new TextMessageCommand[0]));
@@ -481,50 +481,50 @@ public class DebugBot extends EventBot {
                 SocketType.ChatSocket.getURI(), SocketType.ChatSocket.getURI(),
                 matcherUri)));
         // if the original atom wants to connect - always open
-        bus.subscribe(ConnectFromOtherAtomEvent.class, new OpenConnectionDebugAction(ctx, welcomeMessage, welcomeHelpMessage),
-                new PublishSetChattinessEventAction(ctx, true));
+        /*bus.subscribe(ConnectFromOtherAtomEvent.class, new OpenConnectionDebugAction(ctx, welcomeMessage, welcomeHelpMessage),
+                new PublishSetChattinessEventAction(ctx, true));*/
         // if the remote side opens, send a greeting and set to chatty.
-        bus.subscribe(OpenFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, true));
+        //bus.subscribe(OpenFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, true));
 
 
-        bus.subscribe(OpenFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
+        //bus.subscribe(OpenFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
         // if the bot receives a text message - try to map the command of the text
         // message to a DebugEvent
-        bus.subscribe(MessageFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
+        //bus.subscribe(MessageFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
 
-        bus.subscribe(CloseCommandSuccessEvent.class, new PublishSetChattinessEventAction(ctx, false));
+        //bus.subscribe(CloseCommandSuccessEvent.class, new PublishSetChattinessEventAction(ctx, false));
         // react to close event: set connection to not chatty
-        bus.subscribe(CloseFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, false));
+        //bus.subscribe(CloseFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, false));
         // react to the hint and connect commands by creating an atom (it will fire
         // correct atom created for connect/hint
         // events)
-        CreateDebugAtomWithSocketsAction atomCreatorAction = new CreateDebugAtomWithSocketsAction(ctx, true, true);
+        CreateDebugAtomWithSocketsAction atomCreatorAction = new CreateDebugAtomWithSocketsAction(ctx, true, true, SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI());
 
         bus.subscribe(SendNDebugCommandEvent.class, new SendNDebugMessagesAction(ctx,
                 DELAY_BETWEEN_N_MESSAGES, DebugBotIncomingGenericMessage.N_MESSAGES));
         MessageTimingManager timingManager = new MessageTimingManager(ctx);
         // on every actEvent there is a chance we send a chatty message
-        bus.subscribe(ActEvent.class, new SendChattyMessageAction(ctx, CHATTY_MESSAGE_PROBABILITY, timingManager,
+        /*bus.subscribe(ActEvent.class, new SendChattyMessageAction(ctx, CHATTY_MESSAGE_PROBABILITY, timingManager,
                 DebugBotIncomingGenericMessage.RANDOM_MESSAGES,
-                DebugBotIncomingGenericMessage.LAST_MESSAGES));
+                DebugBotIncomingGenericMessage.LAST_MESSAGES));*/
         // process eliza messages with eliza
-        bus.subscribe(MessageToElizaEvent.class, new AnswerWithElizaAction(ctx));
+        // bus.subscribe(MessageToElizaEvent.class, new AnswerWithElizaAction(ctx));
         // remember when we sent the last message
-        bus.subscribe(WonMessageSentOnConnectionEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
+        // bus.subscribe(WonMessageSentOnConnectionEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
         // remember when we got the last message
-        bus.subscribe(WonMessageReceivedOnConnectionEvent.class, new RecordMessageReceivedTimeAction(ctx, timingManager));
+        // bus.subscribe(WonMessageReceivedOnConnectionEvent.class, new RecordMessageReceivedTimeAction(ctx, timingManager));
         // initialize the sent timestamp when the open message is received
-        bus.subscribe(OpenFromOtherAtomEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
+        // bus.subscribe(OpenFromOtherAtomEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
         // initialize the sent timestamp when the connect message is received
-        bus.subscribe(ConnectFromOtherAtomEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
+        // bus.subscribe(ConnectFromOtherAtomEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
 
 
         //Usage Command Event Subscriptions:
-        bus.subscribe(ReplaceDebugAtomContentCommandEvent.class, new ReplaceDebugAtomContentAction(ctx));
-        bus.subscribe(HintDebugCommandEvent.class, atomCreatorAction);
-        bus.subscribe(ConnectDebugCommandEvent.class, atomCreatorAction);
+        // bus.subscribe(ReplaceDebugAtomContentCommandEvent.class, new ReplaceDebugAtomContentAction(ctx));
+        // bus.subscribe(HintDebugCommandEvent.class, atomCreatorAction);
+        // bus.subscribe(ConnectDebugCommandEvent.class, atomCreatorAction);
         // set the chattiness of the connection
-        bus.subscribe(SetChattinessDebugCommandEvent.class, new SetChattinessAction(ctx));
+        // bus.subscribe(SetChattinessDebugCommandEvent.class, new SetChattinessAction(ctx));
     }
 
     /***********************************************************************************

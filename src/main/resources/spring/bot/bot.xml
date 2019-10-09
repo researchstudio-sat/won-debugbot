@@ -44,7 +44,7 @@
         </property>
     </bean>
 
-    <bean id="botContextWrapper" class="won.bot.framework.bot.context.BotServiceAtomEnabledBotContextWrapper">
+    <bean id="botContextWrapper" class="won.bot.framework.bot.context.ServiceAtomEnabledBotContextWrapper">
         <constructor-arg name="botContext" ref="${botContext.impl}"/>
         <constructor-arg name="botName" value="${bot.name}"/>
     </bean>

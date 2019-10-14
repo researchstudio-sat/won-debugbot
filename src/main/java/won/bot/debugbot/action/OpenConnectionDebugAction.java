@@ -37,11 +37,11 @@ import java.util.regex.Pattern;
  */
 public class OpenConnectionDebugAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private String welcomeMessage;
-    private Pattern PATTERN_WAIT = Pattern.compile("wait(\\s+([0-9]{1,2}))?");
-    private Pattern PATTERN_DENY = Pattern.compile("deny");
-    private Pattern PATTERN_IGNORE = Pattern.compile("ignore");
-    private String welcomeHelpMessage;
+    private final String welcomeMessage;
+    private final Pattern PATTERN_WAIT = Pattern.compile("wait(\\s+([0-9]{1,2}))?");
+    private final Pattern PATTERN_DENY = Pattern.compile("deny");
+    private final Pattern PATTERN_IGNORE = Pattern.compile("ignore");
+    private final String welcomeHelpMessage;
 
     public OpenConnectionDebugAction(final EventListenerContext context, final String welcomeMessage,
             final String welcomeHelpMessage) {
@@ -78,7 +78,7 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
             ConnectionSpecificEvent connectEvent = (ConnectionSpecificEvent) event;
             logger.debug("auto-replying to connect for connection {}", connectEvent.getConnectionURI());
             URI connectionUri = connectEvent.getConnectionURI();
-            String finalWelcomeMessage = welcomeMessage;
+            String finalWelcomeMessage;
             if (wait || deny) {
                 finalWelcomeMessage = welcomeMessage + " " + (deny ? "Denying" : "Accepting") + " your request "
                         + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");

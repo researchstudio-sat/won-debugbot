@@ -36,25 +36,19 @@ import java.net.URI;
 import java.util.*;
 
 /**
- * BaseEventBotAction connecting two atoms on the specified sockets, or on other
- * compatible sockets, if the Event default sockets if none are specified.
- * Requires an AtomSpecificEvent to run and expects the atomURI from the event
- * to be associated with another atom URI via the botContext.saveToObjectMap
- * method. If the event is a AtomCreatedEventForDebugHint the HintType is
- * extracted from it, otherwise HintType.ATOM_HINT is assumed. If the event is a
- * AtomCreatedEventForDebugHint we send a text message explaining what kind of
- * hint we produced.
+ * BaseEventBotAction connecting two atoms on the specified sockets, or on other compatible sockets, if the Event
+ * default sockets if none are specified. Requires an AtomSpecificEvent to run and expects the atomURI from the event to
+ * be associated with another atom URI via the botContext.saveToObjectMap method. If the event is a
+ * AtomCreatedEventForDebugHint the HintType is extracted from it, otherwise HintType.ATOM_HINT is assumed. If the event
+ * is a AtomCreatedEventForDebugHint we send a text message explaining what kind of hint we produced.
  * <ul>
  * <li>If it is HintType.ATOM_HINT, an AtomHintMessage is sent.</li>
- * <li>if it is HintType.SOCKET_HINT, the specified sockets are used (i.e.
- * local/targetSocketType). If those are not specified, RANDOM_SOCKET_HINT is
- * assumed</li>
- * <li>if it is HintType.RANDOM_SOCKET_HINT, the two compatible sockets are
- * selected at random for the hint. If there are no compatible sockets,
- * INCOMPATIBLE_SOCKET_HINT is assumed</li>
- * <li>if it is HintType.INCOMPATIBLE_SOCKET_HINT, a random pair of sockets is
- * selected that is incompatible. If we don't find one, we log an error message.
- * </li>
+ * <li>if it is HintType.SOCKET_HINT, the specified sockets are used (i.e. local/targetSocketType). If those are not
+ * specified, RANDOM_SOCKET_HINT is assumed</li>
+ * <li>if it is HintType.RANDOM_SOCKET_HINT, the two compatible sockets are selected at random for the hint. If there
+ * are no compatible sockets, INCOMPATIBLE_SOCKET_HINT is assumed</li>
+ * <li>if it is HintType.INCOMPATIBLE_SOCKET_HINT, a random pair of sockets is selected that is incompatible. If we
+ * don't find one, we log an error message.</li>
  * <li>
  * </ul>
  */
@@ -65,7 +59,7 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
     private URI matcherURI;
 
     public HintAssociatedAtomAction(final EventListenerContext eventListenerContext, final URI targetSocketType,
-                                    final URI localSocketType, final URI matcherURI) {
+            final URI localSocketType, final URI matcherURI) {
         super(eventListenerContext);
         this.targetSocketType = Optional.of(targetSocketType);
         this.localSocketType = Optional.of(localSocketType);
@@ -88,8 +82,7 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
             return;
         }
         HintType hintType = event instanceof AtomCreatedEventForDebugHint
-                        ? ((AtomCreatedEventForDebugHint) event).getHintType()
-                        : HintType.ATOM_HINT;
+                ? ((AtomCreatedEventForDebugHint) event).getHintType() : HintType.ATOM_HINT;
         final URI myAtomUri = ((AtomSpecificEvent) event).getAtomURI();
         final URI targetAtomUri = getEventListenerContext().getBotContextWrapper().getUriAssociation(myAtomUri);
         try {
@@ -97,10 +90,10 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
             Optional<WonMessage> msg = createWonMessage(targetAtomUri, myAtomUri, 0.9, matcherURI, hintType, event);
             if (msg.isPresent()) {
                 getEventListenerContext().getMatcherProtocolAtomServiceClient().hint(targetAtomUri, myAtomUri, 0.9,
-                                matcherURI, null, msg.get());
+                        matcherURI, null, msg.get());
             } else {
                 logger.warn("could not send hint for " + myAtomUri + " to " + targetAtomUri
-                                + ": message generation failed ");
+                        + ": message generation failed ");
             }
         } catch (Exception e) {
             logger.warn("could not send hint for " + myAtomUri + " to " + targetAtomUri, e);
@@ -108,64 +101,59 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
     }
 
     private Optional<WonMessage> createWonMessage(URI atomURI, URI otherAtomURI, double score, URI originator,
-                                                  HintType hintType, Event event)
-                    throws WonMessageBuilderException {
+            HintType hintType, Event event) throws WonMessageBuilderException {
         LinkedDataSource linkedDataSource = getEventListenerContext().getLinkedDataSource();
         WonNodeInformationService wonNodeInformationService = getEventListenerContext().getWonNodeInformationService();
         URI localWonNode = WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(linkedDataSource.getDataForResource(atomURI),
-                        atomURI);
+                atomURI);
         if (hintType == HintType.ATOM_HINT) {
             sendMessageIfReactingToDebugCommand(event,
-                            "Sending AtomHintMessage to " + atomURI + " with target " + otherAtomURI + ".");
+                    "Sending AtomHintMessage to " + atomURI + " with target " + otherAtomURI + ".");
             return Optional.of(WonMessageBuilder
-                            .setMessagePropertiesForHintToAtom(wonNodeInformationService.generateEventURI(localWonNode),
-                                            atomURI, localWonNode, otherAtomURI, originator, score)
-                            .build());
+                    .setMessagePropertiesForHintToAtom(wonNodeInformationService.generateEventURI(localWonNode),
+                            atomURI, localWonNode, otherAtomURI, originator, score)
+                    .build());
         }
         if (hintType == HintType.SOCKET_HINT) {
             if (localSocketType.isPresent() && targetSocketType.isPresent()) {
                 Optional<URI> sourceSocket = localSocketType.map(socketType -> WonLinkedDataUtils
-                                .getSocketsOfType(atomURI, socketType, linkedDataSource).stream().findFirst()
-                                .orElse(null));
+                        .getSocketsOfType(atomURI, socketType, linkedDataSource).stream().findFirst().orElse(null));
                 Optional<URI> targetSocket = targetSocketType.map(
-                                socketType -> WonLinkedDataUtils
-                                                .getSocketsOfType(otherAtomURI, socketType, linkedDataSource)
-                                                .stream().findFirst().orElse(null));
+                        socketType -> WonLinkedDataUtils.getSocketsOfType(otherAtomURI, socketType, linkedDataSource)
+                                .stream().findFirst().orElse(null));
                 if (sourceSocket.isPresent() && targetSocket.isPresent()) {
                     sendMessageIfReactingToDebugCommand(event, "Sending SocketHintMessage to " + sourceSocket.get()
-                                    + " with target " + targetSocket.get() + ".");
-                    return Optional.of(WonMessageBuilder
+                            + " with target " + targetSocket.get() + ".");
+                    return Optional
+                            .of(WonMessageBuilder
                                     .setMessagePropertiesForHintToSocket(
-                                                    wonNodeInformationService.generateEventURI(localWonNode), atomURI,
-                                                    sourceSocket.get(), localWonNode, targetSocket.get(), originator,
-                                                    score)
+                                            wonNodeInformationService.generateEventURI(localWonNode), atomURI,
+                                            sourceSocket.get(), localWonNode, targetSocket.get(), originator, score)
                                     .build());
                 } else {
                     sendMessageIfReactingToDebugCommand(event,
-                                    "Default sockets are specified but not supported by the atoms. Falling back to a random compatible socket combination");
+                            "Default sockets are specified but not supported by the atoms. Falling back to a random compatible socket combination");
                     hintType = HintType.RANDOM_SOCKET_HINT;
                 }
             } else {
                 sendMessageIfReactingToDebugCommand(event,
-                                "No default sockets specified, trying random compatible sockets");
+                        "No default sockets specified, trying random compatible sockets");
                 hintType = HintType.RANDOM_SOCKET_HINT;
             }
         }
         if (hintType == HintType.RANDOM_SOCKET_HINT) {
             Set<Pair<URI>> compatibleSockets = WonLinkedDataUtils.getCompatibleSocketsForAtoms(linkedDataSource,
-                            atomURI, otherAtomURI);
+                    atomURI, otherAtomURI);
             if (!compatibleSockets.isEmpty()) {
                 List<Pair<URI>> shuffledSocketPairs = new ArrayList<>(compatibleSockets);
                 Collections.shuffle(shuffledSocketPairs);
                 Pair<URI> sockets = shuffledSocketPairs.get(0);
                 sendMessageIfReactingToDebugCommand(event, "Sending SocketHintMessage to " + sockets.getFirst()
-                                + " with target " + sockets.getSecond() + ".");
+                        + " with target " + sockets.getSecond() + ".");
                 return Optional.of(WonMessageBuilder
-                                .setMessagePropertiesForHintToSocket(
-                                                wonNodeInformationService.generateEventURI(localWonNode), atomURI,
-                                                sockets.getFirst(), localWonNode, sockets.getSecond(), originator,
-                                                score)
-                                .build());
+                        .setMessagePropertiesForHintToSocket(wonNodeInformationService.generateEventURI(localWonNode),
+                                atomURI, sockets.getFirst(), localWonNode, sockets.getSecond(), originator, score)
+                        .build());
             } else {
                 sendMessageIfReactingToDebugCommand(event, "No compatible sockets found, trying incompatible sockets");
                 hintType = HintType.INCOMPATIBLE_SOCKET_HINT;
@@ -173,22 +161,20 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
         }
         if (hintType == HintType.INCOMPATIBLE_SOCKET_HINT) {
             Set<Pair<URI>> incompatibleSockets = WonLinkedDataUtils.getIncompatibleSocketsForAtoms(linkedDataSource,
-                            atomURI, otherAtomURI);
+                    atomURI, otherAtomURI);
             if (!incompatibleSockets.isEmpty()) {
                 List<Pair<URI>> shuffledSocketPairs = new ArrayList<>(incompatibleSockets);
                 Collections.shuffle(shuffledSocketPairs);
                 Pair<URI> sockets = shuffledSocketPairs.get(0);
                 sendMessageIfReactingToDebugCommand(event, "Sending SocketHintMessage to " + sockets.getFirst()
-                                + " with target " + sockets.getSecond() + ".");
+                        + " with target " + sockets.getSecond() + ".");
                 return Optional.of(WonMessageBuilder
-                                .setMessagePropertiesForHintToSocket(
-                                                wonNodeInformationService.generateEventURI(localWonNode), atomURI,
-                                                sockets.getFirst(), localWonNode, sockets.getSecond(), originator,
-                                                score)
-                                .build());
+                        .setMessagePropertiesForHintToSocket(wonNodeInformationService.generateEventURI(localWonNode),
+                                atomURI, sockets.getFirst(), localWonNode, sockets.getSecond(), originator, score)
+                        .build());
             } else {
                 sendMessageIfReactingToDebugCommand(event,
-                                "No incompatible compatible sockets found. Not sending any hint.");
+                        "No incompatible compatible sockets found. Not sending any hint.");
             }
         }
         logger.info("could not send hint from {} to {}. No suitable sockets found.", atomURI, otherAtomURI);
@@ -197,13 +183,12 @@ public class HintAssociatedAtomAction extends BaseEventBotAction {
 
     private void sendMessageIfReactingToDebugCommand(Event event, String message) {
         if (event instanceof AtomCreatedEventForDebugHint
-                        && ((AtomCreatedEventForDebugHint) event).getCause() instanceof HintDebugCommandEvent) {
+                && ((AtomCreatedEventForDebugHint) event).getCause() instanceof HintDebugCommandEvent) {
             AtomCreatedEventForDebugHint e = (AtomCreatedEventForDebugHint) event;
             HintDebugCommandEvent cause = (HintDebugCommandEvent) e.getCause();
-            Model messageModel = WonRdfUtils.MessageUtils
-                            .textMessage(message);
+            Model messageModel = WonRdfUtils.MessageUtils.textMessage(message);
             getEventListenerContext().getEventBus()
-                            .publish(new ConnectionMessageCommandEvent(cause.getCon(), messageModel));
+                    .publish(new ConnectionMessageCommandEvent(cause.getCon(), messageModel));
         }
     }
 }

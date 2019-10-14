@@ -31,8 +31,7 @@ import java.lang.invoke.MethodHandles;
 import java.net.URI;
 
 /**
- * Creates an atom with the specified sockets. If no socket is specified, the
- * chatSocket will be used.
+ * Creates an atom with the specified sockets. If no socket is specified, the chatSocket will be used.
  */
 public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -69,7 +68,7 @@ public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
         EventBus bus = ctx.getEventBus();
         final URI wonNodeUri = URI.create(atomModelWrapper.getWonNodeUri());
         logger.debug("replacing atom on won node {} with content {} ", wonNodeUri,
-                        StringUtils.abbreviate(RdfUtils.toString(onlyContentGraphDataset), 150));
+                StringUtils.abbreviate(RdfUtils.toString(onlyContentGraphDataset), 150));
         bus.publish(new ReplaceCommandEvent(onlyContentGraphDataset));
     }
 }

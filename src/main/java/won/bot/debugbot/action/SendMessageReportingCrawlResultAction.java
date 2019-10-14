@@ -16,7 +16,7 @@ public class SendMessageReportingCrawlResultAction extends SendMessageOnCrawlRes
     private StopWatch crawlStopWatch;
 
     public SendMessageReportingCrawlResultAction(EventListenerContext eventListenerContext, Connection con,
-                                                 StopWatch crawlStopWatch) {
+            StopWatch crawlStopWatch) {
         super(eventListenerContext, con);
         this.crawlStopWatch = crawlStopWatch;
     }
@@ -36,7 +36,7 @@ public class SendMessageReportingCrawlResultAction extends SendMessageOnCrawlRes
         Duration crawlDuration = Duration.ofMillis(crawlStopWatch.getLastTaskTimeMillis());
         Dataset conversation = successEvent.getCrawledData();
         return WonRdfUtils.MessageUtils.textMessage("Finished crawl in " + getDurationString(crawlDuration)
-                        + " seconds. The dataset has " + conversation.asDatasetGraph().size() + " rdf graphs.");
+                + " seconds. The dataset has " + conversation.asDatasetGraph().size() + " rdf graphs.");
     }
 
     private String getDurationString(Duration queryDuration) {

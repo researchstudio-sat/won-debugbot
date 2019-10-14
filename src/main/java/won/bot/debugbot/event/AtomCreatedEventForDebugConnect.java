@@ -25,7 +25,7 @@ public class AtomCreatedEventForDebugConnect extends BaseAtomSpecificEvent {
     private final SocketType socketType; // TODO: unused parameter/variable
 
     public AtomCreatedEventForDebugConnect(final URI atomURI, final URI wonNodeUri, final Dataset atomDataset,
-                                           final SocketType socketType) {
+            final SocketType socketType) {
         super(atomURI);
         this.wonNodeUri = wonNodeUri;
         this.atomDataset = atomDataset;

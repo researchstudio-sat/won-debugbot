@@ -25,7 +25,7 @@ public class RecordMessageSentTimeAction extends BaseEventBotAction {
     private MessageTimingManager timingManager;
 
     public RecordMessageSentTimeAction(final EventListenerContext eventListenerContext,
-                    MessageTimingManager timingManager) {
+            MessageTimingManager timingManager) {
         super(eventListenerContext);
         this.timingManager = timingManager;
     }

@@ -21,8 +21,7 @@ import won.bot.framework.eventbot.listener.EventListener;
 import won.protocol.util.WonRdfUtils;
 
 /**
- * Expects a MessageToElizaEvent, passes the message to a Eliza instance and
- * sends eliza's response over the connection.
+ * Expects a MessageToElizaEvent, passes the message to a Eliza instance and sends eliza's response over the connection.
  */
 public class AnswerWithElizaAction extends BaseEventBotAction {
     // use only one eliza instance for all connections
@@ -42,7 +41,7 @@ public class AnswerWithElizaAction extends BaseEventBotAction {
             }
             Model messageModel = WonRdfUtils.MessageUtils.textMessage(elizaResponse);
             getEventListenerContext().getEventBus()
-                            .publish(new ConnectionMessageCommandEvent(messageToElizaEvent.getCon(), messageModel));
+                    .publish(new ConnectionMessageCommandEvent(messageToElizaEvent.getCon(), messageModel));
         }
     }
 }

@@ -23,7 +23,7 @@ public class RecordMessageReceivedTimeAction extends BaseEventBotAction {
     private MessageTimingManager timingManager;
 
     public RecordMessageReceivedTimeAction(final EventListenerContext eventListenerContext,
-                    MessageTimingManager timingManager) {
+            MessageTimingManager timingManager) {
         super(eventListenerContext);
         this.timingManager = timingManager;
     }

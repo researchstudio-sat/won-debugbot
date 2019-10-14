@@ -19,8 +19,7 @@ import won.bot.framework.eventbot.listener.EventListener;
 import won.protocol.model.Connection;
 
 /**
- * Action to set the chattiness of the debug bot. Executing the action will
- * publish a SetChattinessDebugCommandEvent.
+ * Action to set the chattiness of the debug bot. Executing the action will publish a SetChattinessDebugCommandEvent.
  */
 public class PublishSetChattinessEventAction extends BaseEventBotAction {
     private boolean isChatty;

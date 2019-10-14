@@ -10,10 +10,14 @@
  */
 package won.bot.debugbot.action;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import won.bot.debugbot.enums.HintType;
 import won.bot.debugbot.event.AtomCreatedEventForDebugConnect;
 import won.bot.debugbot.event.AtomCreatedEventForDebugHint;
@@ -38,9 +42,6 @@ import won.protocol.util.DefaultAtomModelWrapper;
 import won.protocol.util.RdfUtils;
 import won.protocol.util.WonRdfUtils;
 import won.protocol.vocabulary.WONMATCH;
-
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
 
 /**
  * Creates an atom with the specified sockets. If no socket is specified, the
@@ -115,7 +116,7 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
             atomModelWrapper.addSocket(atomURI + "#socket" + i, socket.toString());
             i++;
         }
-        final Dataset debugAtomDataset = atomModelWrapper.copyDataset();
+        final Dataset debugAtomDataset = atomModelWrapper.copyDatasetWithoutSysinfo();
         final Event origEvent = event;
         logger.debug("creating atom on won node {} with content {} ", wonNodeUri,
                         StringUtils.abbreviate(RdfUtils.toString(debugAtomDataset), 150));

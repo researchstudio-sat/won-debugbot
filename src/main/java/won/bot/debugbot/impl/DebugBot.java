@@ -54,7 +54,7 @@ public class DebugBot extends EventBot implements MatcherExtension {
     protected BaseEventListener autoOpener;
     protected BaseEventListener messageFromOtherAtomListener;
     protected BaseEventListener usageMessageSender;
-    private int registrationMatcherRetryInterval = 30000; // TODO: this should move to MatcherBehaviour
+    private int registrationMatcherRetryInterval = 30000;
     private MatcherBehaviour matcherBehaviour;
 
     public void setRegistrationMatcherRetryInterval(final int registrationMatcherRetryInterval) {
@@ -71,7 +71,6 @@ public class DebugBot extends EventBot implements MatcherExtension {
     public MatcherBehaviour getMatcherBehaviour() {
         return matcherBehaviour;
     }
-
     @Override
     protected void initializeEventListeners() {
 
@@ -105,7 +104,7 @@ public class DebugBot extends EventBot implements MatcherExtension {
         wonMessageCommandBehaviour.activate();
 
         // set up matching extension
-        matcherBehaviour = new MatcherBehaviour(ctx, "DebugBotMatchingExtension");
+        matcherBehaviour = new MatcherBehaviour(ctx, "DebugBotMatchingExtension", registrationMatcherRetryInterval);
         matcherBehaviour.activate();
 
         // filter to prevent reacting to own atoms

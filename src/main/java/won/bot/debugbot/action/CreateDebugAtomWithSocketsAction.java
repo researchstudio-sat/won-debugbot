@@ -33,9 +33,9 @@ import won.bot.framework.eventbot.event.AtomCreationFailedEvent;
 import won.bot.framework.eventbot.event.AtomSpecificEvent;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
-import won.bot.framework.eventbot.event.impl.matcher.AtomCreatedEventForMatcher;
 import won.bot.framework.eventbot.event.impl.wonmessage.FailureResponseEvent;
 import won.bot.framework.eventbot.listener.EventListener;
+import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.protocol.message.WonMessage;
 import won.protocol.service.WonNodeInformationService;
 import won.protocol.util.DefaultAtomModelWrapper;
@@ -69,8 +69,8 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
             logger.warn("could not process non-atom specific event {}", event);
             return;
         }
-        if (event instanceof AtomCreatedEventForMatcher) {
-            atomDataset = ((AtomCreatedEventForMatcher) event).getAtomData();
+        if (event instanceof MatcherExtensionAtomCreatedEvent) {
+            atomDataset = ((MatcherExtensionAtomCreatedEvent) event).getAtomData();
         } else if (event instanceof HintDebugCommandEvent) {
             reactingToAtomUriTmp = ((HintDebugCommandEvent) event).getTargetAtomURI();
         } else if (event instanceof ConnectDebugCommandEvent) {

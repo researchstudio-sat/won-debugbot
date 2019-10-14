@@ -18,7 +18,6 @@ import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.action.EventBotAction;
 import won.bot.framework.eventbot.action.impl.MultipleActions;
 import won.bot.framework.eventbot.action.impl.RandomDelayedAction;
-import won.bot.framework.eventbot.action.impl.matcher.RegisterMatcherAction;
 import won.bot.framework.eventbot.action.impl.wonmessage.SendMultipleMessagesAction;
 import won.bot.framework.eventbot.behaviour.BotBehaviour;
 import won.bot.framework.eventbot.behaviour.EagerlyPopulateCacheBehaviour;
@@ -27,14 +26,15 @@ import won.bot.framework.eventbot.bus.EventBus;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.command.close.CloseCommandSuccessEvent;
 import won.bot.framework.eventbot.event.impl.lifecycle.ActEvent;
-import won.bot.framework.eventbot.event.impl.matcher.AtomCreatedEventForMatcher;
-import won.bot.framework.eventbot.event.impl.matcher.MatcherRegisterFailedEvent;
+import won.bot.framework.eventbot.event.impl.matcher.MatcherExtensionAtomCreatedEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.*;
 import won.bot.framework.eventbot.filter.impl.AtomUriInNamedListFilter;
 import won.bot.framework.eventbot.filter.impl.NotFilter;
 import won.bot.framework.eventbot.listener.BaseEventListener;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.framework.eventbot.listener.impl.ActionOnEventListener;
+import won.bot.framework.extensions.matcher.MatcherBehaviour;
+import won.bot.framework.extensions.matcher.MatcherExtension;
 import won.protocol.model.SocketType;
 
 import java.net.URI;
@@ -44,19 +44,18 @@ import java.net.URI;
  * one of these atoms, and a hint message for original atom offering match to another of these atoms. Additionally, it
  * reacts to certain commands send via text messages on the connections with the created by the bot atoms.
  */
-public class DebugBot extends EventBot {
+public class DebugBot extends EventBot implements MatcherExtension {
     private static final long CONNECT_DELAY_MILLIS = 0;
     private static final long DELAY_BETWEEN_N_MESSAGES = 1000;
     private static final double CHATTY_MESSAGE_PROBABILITY = 0.1;
-    private BaseEventListener matcherRegistrator;
     protected BaseEventListener atomCreator;
     protected BaseEventListener atomConnector;
     protected BaseEventListener atomHinter;
     protected BaseEventListener autoOpener;
-    protected BaseEventListener atomCloser;
     protected BaseEventListener messageFromOtherAtomListener;
     protected BaseEventListener usageMessageSender;
-    private int registrationMatcherRetryInterval = 30000;
+    private int registrationMatcherRetryInterval = 30000; // TODO: this should move to MatcherBehaviour
+    private MatcherBehaviour matcherBehaviour;
 
     public void setRegistrationMatcherRetryInterval(final int registrationMatcherRetryInterval) {
         this.registrationMatcherRetryInterval = registrationMatcherRetryInterval;
@@ -66,6 +65,11 @@ public class DebugBot extends EventBot {
 
     public void setMatcherUri(final URI matcherUri) {
         this.matcherUri = matcherUri;
+    }
+
+    @Override
+    public MatcherBehaviour getMatcherBehaviour() {
+        return matcherBehaviour;
     }
 
     @Override
@@ -80,6 +84,7 @@ public class DebugBot extends EventBot {
         // eagerly cache RDF data
         BotBehaviour eagerlyCacheBehaviour = new EagerlyPopulateCacheBehaviour(ctx);
         eagerlyCacheBehaviour.activate();
+
         // react to a bot command activating/deactivating eager caching
         bus.subscribe(SetCacheEagernessCommandEvent.class, new ActionOnEventListener(ctx, new BaseEventBotAction(ctx) {
             @Override
@@ -93,46 +98,43 @@ public class DebugBot extends EventBot {
                 }
             }
         }));
+
         // register listeners for event.impl.command events used to tell the bot to send
         // messages
         ExecuteWonMessageCommandBehaviour wonMessageCommandBehaviour = new ExecuteWonMessageCommandBehaviour(ctx);
         wonMessageCommandBehaviour.activate();
-        // register with WoN nodes, be notified when new atoms are created
-        RegisterMatcherAction registerMatcherAction = new RegisterMatcherAction(ctx);
-        this.matcherRegistrator = new ActionOnEventListener(ctx, registerMatcherAction, 1);
-        bus.subscribe(ActEvent.class, this.matcherRegistrator);
-        RandomDelayedAction delayedRegistration = new RandomDelayedAction(ctx, registrationMatcherRetryInterval,
-                registrationMatcherRetryInterval, 0, registerMatcherAction);
-        ActionOnEventListener matcherRetryRegistrator = new ActionOnEventListener(ctx, delayedRegistration);
-        bus.subscribe(MatcherRegisterFailedEvent.class, matcherRetryRegistrator);
-        // create the echo atom for debug initial connect - if we're not reacting to the
-        // creation of our own echo atom.
-        CreateDebugAtomWithSocketsAction atomForInitialConnectAction = new CreateDebugAtomWithSocketsAction(ctx, true,
+
+        // set up matching extension
+        matcherBehaviour = new MatcherBehaviour(ctx, "DebugBotMatchingExtension");
+        matcherBehaviour.activate();
+
+        // filter to prevent reacting to own atoms
+        NotFilter noOwnAtoms = new NotFilter(
+                new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
+
+        // setup for connecting to new atoms
+        CreateDebugAtomWithSocketsAction initialConnector = new CreateDebugAtomWithSocketsAction(ctx, true,
                 true, SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI(),
                 SocketType.BuddySocket.getURI());
-        atomForInitialConnectAction.setIsInitialForConnect(true);
-        ActionOnEventListener initialConnector = new ActionOnEventListener(ctx,
-                new NotFilter(new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName())),
-                atomForInitialConnectAction);
-        bus.subscribe(AtomCreatedEventForMatcher.class, initialConnector);
-        // create the echo atom for debug initial hint - if we're not reacting to the
-        // creation of our own echo atom.
+        initialConnector.setIsInitialForConnect(true);
+        ActionOnEventListener atomForInitialConnectAction = new ActionOnEventListener(ctx, noOwnAtoms, initialConnector);
+        bus.subscribe(MatcherExtensionAtomCreatedEvent.class, atomForInitialConnectAction);
+
+        // setup for sending hints to new atoms
         CreateDebugAtomWithSocketsAction initialHinter = new CreateDebugAtomWithSocketsAction(ctx, true, true,
                 SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI(), SocketType.BuddySocket.getURI());
         initialHinter.setIsInitialForHint(true);
-        ActionOnEventListener atomForInitialHintListener = new ActionOnEventListener(ctx,
-                new NotFilter(new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName())),
-                initialHinter);
-        bus.subscribe(AtomCreatedEventForMatcher.class, atomForInitialHintListener);
-        // as soon as the echo atom triggered by debug connect created, connect to
-        // original
+        ActionOnEventListener atomForInitialHintListener = new ActionOnEventListener(ctx, noOwnAtoms, initialHinter);
+        bus.subscribe(MatcherExtensionAtomCreatedEvent.class, atomForInitialHintListener);
+
+        // as soon as the echo atom triggered by debug connect created, connect to original
         this.atomConnector = new ActionOnEventListener(ctx, "atomConnector",
                 new RandomDelayedAction(ctx, CONNECT_DELAY_MILLIS, CONNECT_DELAY_MILLIS, 1,
                         new ConnectWithAssociatedAtomAction(ctx, SocketType.ChatSocket.getURI(),
                                 SocketType.ChatSocket.getURI(), welcomeMessage + " " + welcomeHelpMessage)));
         bus.subscribe(AtomCreatedEventForDebugConnect.class, this.atomConnector);
-        // as soon as the echo atom triggered by debug hint command created, hint to
-        // original
+
+        // as soon as the echo atom triggered by debug hint command created, hint to original
         this.atomHinter = new ActionOnEventListener(ctx, "atomHinter",
                 new RandomDelayedAction(ctx, CONNECT_DELAY_MILLIS, CONNECT_DELAY_MILLIS, 1,
                         new HintAssociatedAtomAction(ctx, SocketType.ChatSocket.getURI(),

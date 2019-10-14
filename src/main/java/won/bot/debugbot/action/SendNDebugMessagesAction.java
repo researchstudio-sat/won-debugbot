@@ -33,7 +33,7 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
     private long delayBetweenMessages = 1000;
 
     public SendNDebugMessagesAction(final EventListenerContext eventListenerContext, long delayBetweenMessages,
-                                    String... messages) {
+            String... messages) {
         super(eventListenerContext);
         this.delayBetweenMessages = delayBetweenMessages;
         this.messages = messages;
@@ -51,14 +51,14 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
                 delay += delayBetweenMessages;
                 String messageText = this.messages[i];
                 getEventListenerContext().getTaskScheduler().schedule(createMessageTask(connUri, messageText),
-                                new Date(System.currentTimeMillis() + delay));
+                        new Date(System.currentTimeMillis() + delay));
             }
         }
     }
 
     private Runnable createMessageTask(final URI connectionURI, final String messageText) {
         return () -> getEventListenerContext().getWonMessageSender()
-                        .sendWonMessage(createWonMessage(connectionURI, messageText));
+                .sendWonMessage(createWonMessage(connectionURI, messageText));
     }
 
     private WonMessage createWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
@@ -70,11 +70,9 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
         Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
         URI messageURI = wonNodeInformationService.generateEventURI(wonNode);
         return WonMessageBuilder
-                        .setMessagePropertiesForConnectionMessage(messageURI, connectionURI, localAtom, wonNode,
-                                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF,
-                                                        connectionURI),
-                                        targetAtom,
-                                        WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
-                        .build();
+                .setMessagePropertiesForConnectionMessage(messageURI, connectionURI, localAtom, wonNode,
+                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF, connectionURI),
+                        targetAtom, WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
+                .build();
     }
 }

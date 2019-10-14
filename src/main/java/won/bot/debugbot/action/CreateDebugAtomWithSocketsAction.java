@@ -44,8 +44,7 @@ import won.protocol.util.WonRdfUtils;
 import won.protocol.vocabulary.WONMATCH;
 
 /**
- * Creates an atom with the specified sockets. If no socket is specified, the
- * chatSocket will be used.
+ * Creates an atom with the specified sockets. If no socket is specified, the chatSocket will be used.
  */
 public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
@@ -54,9 +53,9 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
     private boolean isInitialForConnect;
 
     public CreateDebugAtomWithSocketsAction(final EventListenerContext eventListenerContext,
-                                            final boolean usedForTesting, final boolean doNotMatch, final URI... sockets) {
+            final boolean usedForTesting, final boolean doNotMatch, final URI... sockets) {
         super(eventListenerContext, eventListenerContext.getBotContextWrapper().getAtomCreateListName(), usedForTesting,
-                        doNotMatch, sockets);
+                doNotMatch, sockets);
     }
 
     @Override
@@ -119,9 +118,9 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
         final Dataset debugAtomDataset = atomModelWrapper.copyDatasetWithoutSysinfo();
         final Event origEvent = event;
         logger.debug("creating atom on won node {} with content {} ", wonNodeUri,
-                        StringUtils.abbreviate(RdfUtils.toString(debugAtomDataset), 150));
+                StringUtils.abbreviate(RdfUtils.toString(debugAtomDataset), 150));
         WonMessage createAtomMessage = createWonMessage(wonNodeInformationService, atomURI, wonNodeUri,
-                        debugAtomDataset);
+                debugAtomDataset);
         // remember the atom URI so we can react to success/failure responses
         EventBotActionUtils.rememberInList(ctx, atomURI, uriListName);
         EventListener successCallback = event12 -> {
@@ -132,13 +131,11 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
                 HintType hintType = HintType.RANDOM_SOCKET_HINT; // default: hint to random compatible sockets
                 if (origEvent instanceof HintDebugCommandEvent) {
                     hintType = ((HintDebugCommandEvent) origEvent).getHintType();
-                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri,
-                                    debugAtomDataset,
-                                    hintType));
+                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri, debugAtomDataset,
+                            hintType));
                 } else {
-                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri,
-                                    debugAtomDataset,
-                                    hintType));
+                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri, debugAtomDataset,
+                            hintType));
                 }
             } else if ((origEvent instanceof ConnectDebugCommandEvent) || isInitialForConnect) {
                 bus.publish(new AtomCreatedEventForDebugConnect(atomURI, wonNodeUri, debugAtomDataset, null));
@@ -148,9 +145,9 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
         };
         EventListener failureCallback = event1 -> {
             String textMessage = WonRdfUtils.MessageUtils
-                            .getTextMessage(((FailureResponseEvent) event1).getFailureMessage());
-            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", new Object[] {
-                            atomURI, ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage });
+                    .getTextMessage(((FailureResponseEvent) event1).getFailureMessage());
+            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}",
+                    new Object[] { atomURI, ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage });
             EventBotActionUtils.removeFromList(ctx, atomURI, uriListName);
             bus.publish(new AtomCreationFailedEvent(wonNodeUri));
         };

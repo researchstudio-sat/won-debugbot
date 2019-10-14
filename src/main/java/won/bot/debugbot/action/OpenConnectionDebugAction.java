@@ -44,7 +44,7 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
     private String welcomeHelpMessage;
 
     public OpenConnectionDebugAction(final EventListenerContext context, final String welcomeMessage,
-                                     final String welcomeHelpMessage) {
+            final String welcomeHelpMessage) {
         super(context);
         this.welcomeMessage = welcomeMessage;
         this.welcomeHelpMessage = welcomeHelpMessage;
@@ -64,7 +64,7 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
             Matcher ignoreMatcher = PATTERN_IGNORE.matcher(message);
             if (ignoreMatcher.find()) {
                 logger.debug("not reacting to incoming message of type {} as the welcome message contained 'ignore'",
-                                msg.getMessageType());
+                        msg.getMessageType());
                 return;
             }
             Matcher waitMatcher = PATTERN_WAIT.matcher(message);
@@ -81,12 +81,12 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
             String finalWelcomeMessage = welcomeMessage;
             if (wait || deny) {
                 finalWelcomeMessage = welcomeMessage + " " + (deny ? "Denying" : "Accepting") + " your request "
-                                + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");
+                        + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");
             } else {
                 finalWelcomeMessage = welcomeMessage + " " + welcomeHelpMessage;
             }
             final WonMessage toSend = deny ? createCloseWonMessage(connectionUri, finalWelcomeMessage)
-                            : createOpenWonMessage(connectionUri, finalWelcomeMessage);
+                    : createOpenWonMessage(connectionUri, finalWelcomeMessage);
             Runnable task = () -> getEventListenerContext().getWonMessageSender().sendWonMessage(toSend);
             if (wait) {
                 Date when = new Date(System.currentTimeMillis() + waitSeconds * 1000);
@@ -105,13 +105,11 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
         URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
         Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
         return WonMessageBuilder
-                        .setMessagePropertiesForOpen(wonNodeInformationService.generateEventURI(wonNode), connectionURI,
-                                        localAtom, wonNode,
-                                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF,
-                                                        connectionURI),
-                                        targetAtom,
-                                        WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
-                        .build();
+                .setMessagePropertiesForOpen(wonNodeInformationService.generateEventURI(wonNode), connectionURI,
+                        localAtom, wonNode,
+                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF, connectionURI),
+                        targetAtom, WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
+                .build();
     }
 
     private WonMessage createCloseWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
@@ -122,12 +120,10 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
         URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
         Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
         return WonMessageBuilder
-                        .setMessagePropertiesForClose(wonNodeInformationService.generateEventURI(wonNode),
-                                        connectionURI, localAtom, wonNode,
-                                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF,
-                                                        connectionURI),
-                                        targetAtom,
-                                        WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
-                        .build();
+                .setMessagePropertiesForClose(wonNodeInformationService.generateEventURI(wonNode), connectionURI,
+                        localAtom, wonNode,
+                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF, connectionURI),
+                        targetAtom, WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
+                .build();
     }
 }

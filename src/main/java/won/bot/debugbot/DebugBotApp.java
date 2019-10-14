@@ -15,7 +15,7 @@ public class DebugBotApp {
             System.exit(1);
         }
 
-        //SpringApplication app = new SpringApplication("classpath:/spring/app/botApp.xml");
+        // SpringApplication app = new SpringApplication("classpath:/spring/app/botApp.xml");
         SpringApplication app = new SpringApplication(DebugBotApp.class);
         app.setWebEnvironment(false);
         app.run(args);

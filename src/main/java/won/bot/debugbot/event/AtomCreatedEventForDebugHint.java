@@ -26,9 +26,8 @@ public class AtomCreatedEventForDebugHint extends BaseAtomSpecificEvent {
     private final HintType hintType;
     private final Event cause;
 
-    public AtomCreatedEventForDebugHint(Event cause, final URI atomURI, final URI wonNodeUri,
-                                        final Dataset atomDataset,
-                                        final HintType hintType) {
+    public AtomCreatedEventForDebugHint(Event cause, final URI atomURI, final URI wonNodeUri, final Dataset atomDataset,
+            final HintType hintType) {
         super(atomURI);
         this.cause = cause;
         this.wonNodeUri = wonNodeUri;

@@ -26,10 +26,6 @@ import won.bot.framework.eventbot.behaviour.BotBehaviour;
 import won.bot.framework.eventbot.behaviour.CrawlConnectionDataBehaviour;
 import won.bot.framework.eventbot.behaviour.EagerlyPopulateCacheBehaviour;
 import won.bot.framework.eventbot.behaviour.ExecuteWonMessageCommandBehaviour;
-import won.bot.framework.eventbot.behaviour.botatom.ServiceAtomBotBehaviour;
-import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommand;
-import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandBehaviour;
-import won.bot.framework.eventbot.behaviour.textmessagecommand.TextMessageCommandFilter;
 import won.bot.framework.eventbot.bus.EventBus;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.command.close.CloseCommandEvent;
@@ -40,12 +36,15 @@ import won.bot.framework.eventbot.event.impl.crawlconnection.CrawlConnectionComm
 import won.bot.framework.eventbot.event.impl.crawlconnection.CrawlConnectionCommandSuccessEvent;
 import won.bot.framework.eventbot.event.impl.lifecycle.ActEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.*;
-import won.bot.framework.eventbot.filter.impl.AtomUriInNamedListFilter;
 import won.bot.framework.eventbot.filter.impl.NotFilter;
-import won.bot.framework.eventbot.listener.BaseEventListener;
+import won.bot.framework.eventbot.filter.impl.OrFilter;
 import won.bot.framework.eventbot.listener.EventListener;
-import won.bot.framework.eventbot.listener.impl.ActionOnEventListener;
 import won.bot.framework.extensions.matcher.*;
+import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
+import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
+import won.bot.framework.extensions.textmessagecommand.TextMessageCommand;
+import won.bot.framework.extensions.textmessagecommand.TextMessageCommandBehaviour;
+import won.bot.framework.extensions.textmessagecommand.TextMessageCommandExtension;
 import won.protocol.agreement.AgreementProtocolState;
 import won.protocol.agreement.effect.MessageEffect;
 import won.protocol.model.Connection;
@@ -70,7 +69,7 @@ import java.util.stream.Collectors;
  * one of these atoms, and a hint message for original atom offering match to another of these atoms. Additionally, it
  * reacts to certain commands send via text messages on the connections with the created by the bot atoms.
  */
-public class DebugBot extends EventBot implements MatcherExtension {
+public class DebugBot extends EventBot implements MatcherExtension, TextMessageCommandExtension, ServiceAtomExtension {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private static final long CONNECT_DELAY_MILLIS = 0;
@@ -78,12 +77,24 @@ public class DebugBot extends EventBot implements MatcherExtension {
     private static final double CHATTY_MESSAGE_PROBABILITY = 0.1;
     private long registrationMatcherRetryInterval = 30000L;
     private MatcherBehaviour matcherBehaviour;
+    private TextMessageCommandBehaviour textMessageCommandBehaviour;
+    private ServiceAtomBehaviour serviceAtomBehaviour;
 
     private URI matcherUri;
 
     @Override
     public MatcherBehaviour getMatcherBehaviour() {
         return matcherBehaviour;
+    }
+
+    @Override
+    public TextMessageCommandBehaviour getTextMessageCommandBehaviour() {
+        return textMessageCommandBehaviour;
+    }
+
+    @Override
+    public ServiceAtomBehaviour getServiceAtomBehaviour() {
+        return serviceAtomBehaviour;
     }
 
     @Override
@@ -416,29 +427,17 @@ public class DebugBot extends EventBot implements MatcherExtension {
                 )
         );
 
-        ServiceAtomBotBehaviour serviceAtomBotBehaviour = new ServiceAtomBotBehaviour(ctx);
-        serviceAtomBotBehaviour.activate();
+        // activate ServiceAtomBehaviour
+        serviceAtomBehaviour = new ServiceAtomBehaviour(ctx);
+        serviceAtomBehaviour.activate();
 
         // activate TextMessageCommandBehaviour
-        TextMessageCommandBehaviour usageBehaviour = new TextMessageCommandBehaviour(ctx, botCommands.toArray(new TextMessageCommand[0]));
-        usageBehaviour.activate();
+        textMessageCommandBehaviour = new TextMessageCommandBehaviour(ctx, botCommands.toArray(new TextMessageCommand[0]));
+        textMessageCommandBehaviour.activate();
 
         // eagerly cache RDF data
         BotBehaviour eagerlyCacheBehaviour = new EagerlyPopulateCacheBehaviour(ctx);
         eagerlyCacheBehaviour.activate();
-        // react to a bot command activating/deactivating eager caching
-        bus.subscribe(SetCacheEagernessCommandEvent.class, new BaseEventBotAction(ctx) {
-            @Override
-            protected void doRun(Event event, EventListener executingListener) throws Exception {
-                if (event instanceof SetCacheEagernessCommandEvent) {
-                    if (((SetCacheEagernessCommandEvent) event).isEager()) {
-                        eagerlyCacheBehaviour.activate();
-                    } else {
-                        eagerlyCacheBehaviour.deactivate();
-                    }
-                }
-            }
-        });
 
         // register listeners for event.impl.command events used to tell the bot to send
         // messages
@@ -450,23 +449,25 @@ public class DebugBot extends EventBot implements MatcherExtension {
         matcherBehaviour.activate();
 
         // filter to prevent reacting to own atoms
-        NotFilter noOwnAtoms = new NotFilter(
-                new AtomUriInNamedListFilter(ctx, ctx.getBotContextWrapper().getAtomCreateListName()));
+        NotFilter noOwnAtomsFilter = getNoOwnAtomsFilter();
+
+        // filter to prevent reacting to serviceAtom<->ownedAtom events;
+        NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
 
         // setup for connecting to new atoms
         CreateDebugAtomWithSocketsAction initialConnector = new CreateDebugAtomWithSocketsAction(ctx, true,
                 true, SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI(),
                 SocketType.BuddySocket.getURI());
         initialConnector.setIsInitialForConnect(true);
-        bus.subscribe(MatcherExtensionAtomCreatedEvent.class, new ActionOnEventListener(ctx, noOwnAtoms, initialConnector));
+        bus.subscribe(MatcherExtensionAtomCreatedEvent.class, noOwnAtomsFilter, initialConnector);
 
         // setup for sending hints to new atoms
         CreateDebugAtomWithSocketsAction initialHinter = new CreateDebugAtomWithSocketsAction(ctx, true, true,
                 SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI(),
                 SocketType.BuddySocket.getURI());
         initialHinter.setIsInitialForHint(true);
-        ActionOnEventListener atomForInitialHintListener = new ActionOnEventListener(ctx, noOwnAtoms, initialHinter);
-        bus.subscribe(MatcherExtensionAtomCreatedEvent.class, atomForInitialHintListener);
+
+        bus.subscribe(MatcherExtensionAtomCreatedEvent.class, noOwnAtomsFilter, initialHinter);
 
         // as soon as the echo atom triggered by debug connect created, connect to original
         bus.subscribe(AtomCreatedEventForDebugConnect.class,
@@ -481,33 +482,30 @@ public class DebugBot extends EventBot implements MatcherExtension {
                         matcherUri)));
 
         // if the original atom wants to connect - always open
-        bus.subscribe(ConnectFromOtherAtomEvent.class, new OpenConnectionDebugAction(ctx, welcomeMessage, welcomeHelpMessage),
+        bus.subscribe(ConnectFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new OpenConnectionDebugAction(ctx, welcomeMessage, welcomeHelpMessage),
                 new PublishSetChattinessEventAction(ctx, true));
+
         // if the remote side opens, send a greeting and set to chatty.
-        bus.subscribe(OpenFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, true));
+        bus.subscribe(OpenFromOtherAtomEvent.class, noInternalServiceAtomEventFilter, new PublishSetChattinessEventAction(ctx, true));
 
+        // filter to prevent reacting to message Commands
+        NotFilter noTextMessageCommandsFilter = getNoTextMessageCommandFilter();
 
-        bus.subscribe(OpenFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
+        bus.subscribe(OpenFromOtherAtomEvent.class, new OrFilter(noTextMessageCommandsFilter, noInternalServiceAtomEventFilter), new DebugBotIncomingGenericMessageAction(ctx));
         // if the bot receives a text message - try to map the command of the text
         // message to a DebugEvent
-        bus.subscribe(MessageFromOtherAtomEvent.class, new ActionOnEventListener(ctx, new NotFilter(new TextMessageCommandFilter(ctx, usageBehaviour)), new DebugBotIncomingGenericMessage(ctx)));
+        bus.subscribe(MessageFromOtherAtomEvent.class, noTextMessageCommandsFilter, new DebugBotIncomingGenericMessageAction(ctx));
 
         bus.subscribe(CloseCommandSuccessEvent.class, new PublishSetChattinessEventAction(ctx, false));
         // react to close event: set connection to not chatty
         bus.subscribe(CloseFromOtherAtomEvent.class, new PublishSetChattinessEventAction(ctx, false));
-        // react to the hint and connect commands by creating an atom (it will fire
-        // correct atom created for connect/hint
-        // events)
-        CreateDebugAtomWithSocketsAction atomCreatorAction = new CreateDebugAtomWithSocketsAction(ctx, true, true, SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI());
 
-        bus.subscribe(SendNDebugCommandEvent.class, new SendNDebugMessagesAction(ctx,
-                DELAY_BETWEEN_N_MESSAGES, DebugBotIncomingGenericMessage.N_MESSAGES));
         MessageTimingManager timingManager = new MessageTimingManager(ctx);
         // on every actEvent there is a chance we send a chatty message
         bus.subscribe(ActEvent.class,
               new SendChattyMessageAction(ctx, CHATTY_MESSAGE_PROBABILITY, timingManager,
-                    DebugBotIncomingGenericMessage.RANDOM_MESSAGES,
-                        DebugBotIncomingGenericMessage.LAST_MESSAGES));
+                    DebugBotIncomingGenericMessageAction.RANDOM_MESSAGES,
+                        DebugBotIncomingGenericMessageAction.LAST_MESSAGES));
         // process eliza messages with eliza
         bus.subscribe(MessageToElizaEvent.class, new AnswerWithElizaAction(ctx));
         // remember when we sent the last message
@@ -519,13 +517,35 @@ public class DebugBot extends EventBot implements MatcherExtension {
         // initialize the sent timestamp when the connect message is received
         bus.subscribe(ConnectFromOtherAtomEvent.class, new RecordMessageSentTimeAction(ctx, timingManager));
 
-
         //Usage Command Event Subscriptions:
         bus.subscribe(ReplaceDebugAtomContentCommandEvent.class, new ReplaceDebugAtomContentAction(ctx));
+
+        bus.subscribe(SendNDebugCommandEvent.class, new SendNDebugMessagesAction(ctx,
+                DELAY_BETWEEN_N_MESSAGES, DebugBotIncomingGenericMessageAction.N_MESSAGES));
+
+        // react to the hint and connect commands by creating an atom (it will fire
+        // correct atom created for connect/hint
+        // events)
+        CreateDebugAtomWithSocketsAction atomCreatorAction = new CreateDebugAtomWithSocketsAction(ctx, true, true, SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI());
         bus.subscribe(HintDebugCommandEvent.class, atomCreatorAction);
         bus.subscribe(ConnectDebugCommandEvent.class, atomCreatorAction);
+
         // set the chattiness of the connection
         bus.subscribe(SetChattinessDebugCommandEvent.class, new SetChattinessAction(ctx));
+
+        // react to a bot command activating/deactivating eager caching
+        bus.subscribe(SetCacheEagernessCommandEvent.class, new BaseEventBotAction(ctx) {
+            @Override
+            protected void doRun(Event event, EventListener executingListener) throws Exception {
+                if (event instanceof SetCacheEagernessCommandEvent) {
+                    if (((SetCacheEagernessCommandEvent) event).isEager()) {
+                        eagerlyCacheBehaviour.activate();
+                    } else {
+                        eagerlyCacheBehaviour.deactivate();
+                    }
+                }
+            }
+        });
     }
 
     /***********************************************************************************

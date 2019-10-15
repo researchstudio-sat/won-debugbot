@@ -33,7 +33,7 @@ import java.lang.invoke.MethodHandles;
  * Listener that reacts to incoming messages, creating internal bot events for
  * them
  */
-public class DebugBotIncomingGenericMessage extends BaseEventBotAction {
+public class DebugBotIncomingGenericMessageAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     public static final String[] N_MESSAGES = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
@@ -44,7 +44,7 @@ public class DebugBotIncomingGenericMessage extends BaseEventBotAction {
     public static final String[] LAST_MESSAGES = {"?", "Are you still there?", "Gone?", "... cu later, I guess?",
             "Do you still require my services? You can use the 'close' command, you know...", "Ping?"};
 
-    public DebugBotIncomingGenericMessage(EventListenerContext eventListenerContext) {
+    public DebugBotIncomingGenericMessageAction(EventListenerContext eventListenerContext) {
         super(eventListenerContext);
     }
 
@@ -66,7 +66,6 @@ public class DebugBotIncomingGenericMessage extends BaseEventBotAction {
                 if (message == null) {
                     bus.publish(new ConnectionMessageCommandEvent(con, "Whatever you sent me there, it was not a normal text message. I'm expecting a <message> con:text \"Some text\" triple in that message."));
                 } else {
-                    //TODO: REACT TO NON COMMAND EVENTS ONLY?
                     logger.trace("Handling Message to eliza...");
                     bus.publish(new MessageToElizaEvent(con, message));
                 }

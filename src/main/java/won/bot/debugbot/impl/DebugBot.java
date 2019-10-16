@@ -42,9 +42,11 @@ import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.framework.extensions.matcher.*;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
 import won.bot.framework.extensions.serviceatom.ServiceAtomExtension;
-import won.bot.framework.extensions.textmessagecommand.TextMessageCommand;
 import won.bot.framework.extensions.textmessagecommand.TextMessageCommandBehaviour;
 import won.bot.framework.extensions.textmessagecommand.TextMessageCommandExtension;
+import won.bot.framework.extensions.textmessagecommand.command.EqualsTextMessageCommand;
+import won.bot.framework.extensions.textmessagecommand.command.PatternMatcherTextMessageCommand;
+import won.bot.framework.extensions.textmessagecommand.command.TextMessageCommand;
 import won.protocol.agreement.AgreementProtocolState;
 import won.protocol.agreement.effect.MessageEffect;
 import won.protocol.model.Connection;
@@ -111,7 +113,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
         ArrayList<TextMessageCommand> botCommands = new ArrayList<>();
 
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "hint ((random|incompatible) socket)",
                         "create a new atom and send me an atom or socket hint (between random or incompatible sockets)",
                         Pattern.compile("^hint(\\s+((random|incompatible)\\s+)?socket)?$", Pattern.CASE_INSENSITIVE),
@@ -135,29 +137,29 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new EqualsTextMessageCommand(
                         "close",
                         "close the current connection",
-                        Pattern.compile("^close$", Pattern.CASE_INSENSITIVE),
-                        (Connection connection, Matcher matcher) -> {
+                        "close",
+                        (Connection connection) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll close this connection"));
                             bus.publish(new CloseCommandEvent(connection));
                         }
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new EqualsTextMessageCommand(
                         "modify",
                         "modify the atom's description",
-                        Pattern.compile("^modify$", Pattern.CASE_INSENSITIVE),
-                        (Connection connection, Matcher matcher) -> {
+                        "modify",
+                        (Connection connection) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll change my atom description."));
                             bus.publish(new ReplaceDebugAtomContentCommandEvent(connection));
                         }
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "connect",
                         "create a new atom and send connection request to it",
                         Pattern.compile("^connect$", Pattern.CASE_INSENSITIVE),
@@ -168,7 +170,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "deactivate",
                         "deactivate remote atom of the current connection",
                         Pattern.compile("^deactivate$", Pattern.CASE_INSENSITIVE),
@@ -179,7 +181,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "chatty (on|off)",
                         "send chat messages spontaneously every now and then? (default: on)",
                         Pattern.compile("^chatty(\\s+(on|off))?$", Pattern.CASE_INSENSITIVE),
@@ -198,7 +200,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "cache (eager|lazy)",
                         "use lazy or eager RDF cache",
                         Pattern.compile("^cache(\\s+(eager|lazy))?$", Pattern.CASE_INSENSITIVE),
@@ -217,7 +219,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "send N", "send N messages, one per second. N must be an integer between 1 and 9", Pattern.compile("^send ([1-9])$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.find();
@@ -228,7 +230,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "validate", "download the connection data and validate it", Pattern.compile("^validate$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection, "ok, I'll validate the connection - but I'll need to crawl the connection data first, please be patient."));
@@ -261,7 +263,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "retract (mine|proposal)", "retract the last (proposal) message you sent, or the last message I sent", Pattern.compile("^retract(\\s+((mine)|(proposal)))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.matches();
@@ -296,7 +298,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "reject (yours)", "reject the last rejectable message I (you) sent", Pattern.compile("^reject(\\s+(yours))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.matches();
@@ -325,7 +327,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "propose (my|any) (N)", "propose one (N, max 9) of my(/your/any) messages for an agreement", Pattern.compile("^propose(\\s+((my)|(any))?\\s*([1-9])?)?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             matcher.matches();
@@ -360,7 +362,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "accept", "accept the last proposal/claim made (including cancellation proposals)", Pattern.compile("^accept$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> referToEarlierMessages(ctx, bus, connection,
                                 "ok, I'll accept your latest proposal - but I'll need to crawl the connection data first, please be patient.",
@@ -380,7 +382,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "cancel", "propose to cancel the newest agreement (that wasn't only a cancellation)", Pattern.compile("^cancel$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> referToEarlierMessages(ctx, bus, connection,
                                 "ok, I'll propose to cancel our latest agreement - but I'll need to crawl the connection data first, please be patient.",
@@ -399,7 +401,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                 )
         );
         botCommands.add(
-                new TextMessageCommand(
+                new PatternMatcherTextMessageCommand(
                         "inject", "send a message in this connection that will be forwarded to all other connections we have", Pattern.compile("^inject$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection, "Ok, I'll send you one message that will be injected into our other connections by your WoN node if the inject permission is granted"));

@@ -37,7 +37,7 @@ import won.bot.framework.eventbot.event.impl.crawlconnection.CrawlConnectionComm
 import won.bot.framework.eventbot.event.impl.lifecycle.ActEvent;
 import won.bot.framework.eventbot.event.impl.wonmessage.*;
 import won.bot.framework.eventbot.filter.impl.NotFilter;
-import won.bot.framework.eventbot.filter.impl.OrFilter;
+import won.bot.framework.eventbot.filter.impl.AndFilter;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.bot.framework.extensions.matcher.*;
 import won.bot.framework.extensions.serviceatom.ServiceAtomBehaviour;
@@ -493,7 +493,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
         // filter to prevent reacting to message Commands
         NotFilter noTextMessageCommandsFilter = getNoTextMessageCommandFilter();
 
-        bus.subscribe(OpenFromOtherAtomEvent.class, new OrFilter(noTextMessageCommandsFilter, noInternalServiceAtomEventFilter), new DebugBotIncomingGenericMessageAction(ctx));
+        bus.subscribe(OpenFromOtherAtomEvent.class, new AndFilter(noTextMessageCommandsFilter, noInternalServiceAtomEventFilter), new DebugBotIncomingGenericMessageAction(ctx));
         // if the bot receives a text message - try to map the command of the text
         // message to a DebugEvent
         bus.subscribe(MessageFromOtherAtomEvent.class, noTextMessageCommandsFilter, new DebugBotIncomingGenericMessageAction(ctx));

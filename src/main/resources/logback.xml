@@ -46,6 +46,9 @@
     <!-- SET to DEBUG to see bot event listeners -->
     <logger name="won.bot.framework.eventbot.listener" level="INFO"/>
 
+	<!-- SET to DEBUG to log all incoming and outgoing wonMessages -->
+	<logger name="won.bot.framework.bot.base.EventBot" level="INFO" />
+
     <!-- Temporal -->
     <logger name="won.bot.impl.BAAtomicCCAdditionalParticipants" level="INFO" />
     <logger name="won.bot.impl.BAAtomicCCActiveExitingBot" level="INFO" />

@@ -22,7 +22,7 @@ import java.net.URI;
  */
 public class AtomCreatedEventForDebugConnect extends AtomCreatedEvent {
     public AtomCreatedEventForDebugConnect(final URI atomURI, final URI wonNodeUri, final Dataset atomDataset,
-                                           final SocketType socketType) {
+            final SocketType socketType) {
         super(atomURI, wonNodeUri, atomDataset, socketType);
     }
 }

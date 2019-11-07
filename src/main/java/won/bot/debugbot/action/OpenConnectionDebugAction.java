@@ -10,9 +10,16 @@
  */
 package won.bot.debugbot.action;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.event.ConnectionSpecificEvent;
@@ -25,12 +32,6 @@ import won.protocol.message.WonMessage;
 import won.protocol.message.WonMessageBuilder;
 import won.protocol.service.WonNodeInformationService;
 import won.protocol.util.WonRdfUtils;
-
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * User: fkleedorfer Date: 30.01.14
@@ -57,6 +58,7 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
         }
         if (event instanceof WonMessageReceivedOnConnectionEvent) {
             WonMessage msg = ((WonMessageReceivedOnConnectionEvent) event).getWonMessage();
+            WonMessageReceivedOnConnectionEvent msgInConEv = (WonMessageReceivedOnConnectionEvent) event;
             String message = WonRdfUtils.MessageUtils.getTextMessage(msg);
             if (message == null) {
                 message = "";
@@ -86,7 +88,7 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
                 finalWelcomeMessage = welcomeMessage + " " + welcomeHelpMessage;
             }
             final WonMessage toSend = deny ? createCloseWonMessage(connectionUri, finalWelcomeMessage)
-                    : createOpenWonMessage(connectionUri, finalWelcomeMessage);
+                    : createConnectWonMessage(connectionUri, msgInConEv, finalWelcomeMessage);
             Runnable task = () -> getEventListenerContext().getWonMessageSender().sendWonMessage(toSend);
             if (wait) {
                 Date when = new Date(System.currentTimeMillis() + waitSeconds * 1000);
@@ -97,19 +99,17 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
         }
     }
 
-    private WonMessage createOpenWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
+    private WonMessage createConnectWonMessage(URI connectionURI, WonMessageReceivedOnConnectionEvent msgInCon,
+            String message) throws WonMessageBuilderException {
         WonNodeInformationService wonNodeInformationService = getEventListenerContext().getWonNodeInformationService();
         Dataset connectionRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(connectionURI);
         URI targetAtom = WonRdfUtils.ConnectionUtils.getTargetAtomURIFromConnection(connectionRDF, connectionURI);
         URI localAtom = WonRdfUtils.ConnectionUtils.getLocalAtomURIFromConnection(connectionRDF, connectionURI);
         URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
         Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
-        return WonMessageBuilder
-                .setMessagePropertiesForOpen(wonNodeInformationService.generateEventURI(wonNode), connectionURI,
-                        localAtom, wonNode,
-                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF, connectionURI),
-                        targetAtom, WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
-                .build();
+        return WonMessageBuilder.setMessagePropertiesForConnect(wonNodeInformationService.generateEventURI(wonNode),
+                msgInCon.getSocketURI(), localAtom, wonNode, msgInCon.getTargetSocketURI(), targetAtom,
+                WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message).build();
     }
 
     private WonMessage createCloseWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
@@ -118,10 +118,12 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
         URI targetAtom = WonRdfUtils.ConnectionUtils.getTargetAtomURIFromConnection(connectionRDF, connectionURI);
         URI localAtom = WonRdfUtils.ConnectionUtils.getLocalAtomURIFromConnection(connectionRDF, connectionURI);
         URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
+        URI targetSocket = WonRdfUtils.ConnectionUtils.getTargetSocketURIFromConnection(connectionRDF, connectionURI);
+        URI socket = WonRdfUtils.ConnectionUtils.getSocketURIFromConnection(connectionRDF, connectionURI);
         Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
         return WonMessageBuilder
-                .setMessagePropertiesForClose(wonNodeInformationService.generateEventURI(wonNode), connectionURI,
-                        localAtom, wonNode,
+                .setMessagePropertiesForClose(wonNodeInformationService.generateEventURI(wonNode), socket,
+                        connectionURI, localAtom, wonNode, targetSocket,
                         WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF, connectionURI),
                         targetAtom, WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
                 .build();

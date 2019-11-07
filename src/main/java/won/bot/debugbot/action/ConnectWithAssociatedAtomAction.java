@@ -10,9 +10,19 @@
  */
 package won.bot.debugbot.action;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
 import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.event.AtomSpecificEvent;
@@ -26,10 +36,6 @@ import won.protocol.util.RdfUtils.Pair;
 import won.protocol.util.WonRdfUtils;
 import won.protocol.util.linkeddata.LinkedDataSource;
 import won.protocol.util.linkeddata.WonLinkedDataUtils;
-
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.util.*;
 
 /**
  * BaseEventBotAction connecting two atoms on the specified sockets or on two other, compatible sockets. Requires an
@@ -85,16 +91,18 @@ public class ConnectWithAssociatedAtomAction extends BaseEventBotAction {
         URI remoteWonNode = WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, toUri);
         LinkedDataSource linkedDataSource = getEventListenerContext().getLinkedDataSource();
         if (localSocketType.isPresent() && targetSocketType.isPresent()) {
-            Optional<URI> localSocket = localSocketType.map(socketType -> WonLinkedDataUtils
-                    .getSocketsOfType(fromUri, socketType, linkedDataSource).stream().findFirst().orElse(null));
-            Optional<URI> targetSocket = targetSocketType.map(socketType -> WonLinkedDataUtils
-                    .getSocketsOfType(toUri, socketType, linkedDataSource).stream().findFirst().orElse(null));
-            if (localSocket.isPresent() && targetSocket.isPresent()) {
-                return Optional.of(WonMessageBuilder
-                        .setMessagePropertiesForConnect(wonNodeInformationService.generateEventURI(localWonNode),
-                                localSocket, fromUri, localWonNode, targetSocket, toUri, remoteWonNode, welcomeMessage)
-                        .build());
-            }
+            URI localSocket = localSocketType
+                    .map(socketType -> WonLinkedDataUtils.getSocketsOfType(fromUri, socketType, linkedDataSource)
+                            .stream().findFirst())
+                    .orElseThrow(() -> new IllegalStateException("No socket found to connect on " + fromUri)).get();
+            URI targetSocket = targetSocketType
+                    .map(socketType -> WonLinkedDataUtils.getSocketsOfType(toUri, socketType, linkedDataSource).stream()
+                            .findFirst())
+                    .orElseThrow(() -> new IllegalStateException("No socket found to connect on " + fromUri)).get();
+            return Optional.of(WonMessageBuilder.make(wonNodeInformationService.generateEventURI(localWonNode))
+                    .connect().senderSocket(localSocket).senderAtom(fromUri).senderNode(localWonNode)
+                    .recipientSocket(targetSocket).recipientAtom(toUri).recipientNode(remoteWonNode)
+                    .welcomeMessage(welcomeMessage).build());
         }
         // no sockets specified or specified sockets not supported. try a random
         // compatibly pair
@@ -105,8 +113,8 @@ public class ConnectWithAssociatedAtomAction extends BaseEventBotAction {
             Collections.shuffle(shuffledSocketPairs);
             Pair<URI> sockets = shuffledSocketPairs.get(0);
             return Optional.of(WonMessageBuilder.setMessagePropertiesForConnect(
-                    wonNodeInformationService.generateEventURI(localWonNode), Optional.of(sockets.getFirst()), fromUri,
-                    localWonNode, Optional.of(sockets.getSecond()), toUri, remoteWonNode, welcomeMessage).build());
+                    wonNodeInformationService.generateEventURI(localWonNode), sockets.getFirst(), fromUri, localWonNode,
+                    sockets.getSecond(), toUri, remoteWonNode, welcomeMessage).build());
         }
         return Optional.empty();
     }

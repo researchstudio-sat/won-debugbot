@@ -10,7 +10,11 @@
  */
 package won.bot.debugbot.action;
 
+import java.net.URI;
+import java.util.Date;
+
 import org.apache.jena.query.Dataset;
+
 import won.bot.debugbot.event.SendNDebugCommandEvent;
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
@@ -21,9 +25,6 @@ import won.protocol.message.WonMessage;
 import won.protocol.message.WonMessageBuilder;
 import won.protocol.service.WonNodeInformationService;
 import won.protocol.util.WonRdfUtils;
-
-import java.net.URI;
-import java.util.Date;
 
 /**
  * Created by fkleedorfer on 09.06.2016.
@@ -69,8 +70,11 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
         URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
         Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
         URI messageURI = wonNodeInformationService.generateEventURI(wonNode);
+        URI targetSocket = WonRdfUtils.ConnectionUtils.getTargetSocketURIFromConnection(connectionRDF, connectionURI);
+        URI socket = WonRdfUtils.ConnectionUtils.getSocketURIFromConnection(connectionRDF, connectionURI);
         return WonMessageBuilder
-                .setMessagePropertiesForConnectionMessage(messageURI, connectionURI, localAtom, wonNode,
+                .setMessagePropertiesForConnectionMessage(messageURI, socket, connectionURI, localAtom, wonNode,
+                        targetSocket,
                         WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF, connectionURI),
                         targetAtom, WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
                 .build();

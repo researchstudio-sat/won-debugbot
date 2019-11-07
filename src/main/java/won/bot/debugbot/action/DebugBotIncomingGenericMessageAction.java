@@ -30,19 +30,18 @@ import won.protocol.util.WonRdfUtils;
 import java.lang.invoke.MethodHandles;
 
 /**
- * Listener that reacts to incoming messages, creating internal bot events for
- * them
+ * Listener that reacts to incoming messages, creating internal bot events for them
  */
 public class DebugBotIncomingGenericMessageAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
-    public static final String[] N_MESSAGES = {"one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
-            "ten"};
-    public static final String[] RANDOM_MESSAGES = {"Is there anything I can do for you?",
+    public static final String[] N_MESSAGES = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+            "ten" };
+    public static final String[] RANDOM_MESSAGES = { "Is there anything I can do for you?",
             "Did you read the news today?", "By the way, don't you just love the weather these days?",
-            "Type 'usage' to see what I can do for you!", "I think I might see a movie tonight",};
-    public static final String[] LAST_MESSAGES = {"?", "Are you still there?", "Gone?", "... cu later, I guess?",
-            "Do you still require my services? You can use the 'close' command, you know...", "Ping?"};
+            "Type 'usage' to see what I can do for you!", "I think I might see a movie tonight", };
+    public static final String[] LAST_MESSAGES = { "?", "Are you still there?", "Gone?", "... cu later, I guess?",
+            "Do you still require my services? You can use the 'close' command, you know...", "Ping?" };
 
     public DebugBotIncomingGenericMessageAction(EventListenerContext eventListenerContext) {
         super(eventListenerContext);
@@ -64,15 +63,16 @@ public class DebugBotIncomingGenericMessageAction extends BaseEventBotAction {
             String message = extractTextMessageFromWonMessage(msg);
             try {
                 if (message == null) {
-                    bus.publish(new ConnectionMessageCommandEvent(con, "Whatever you sent me there, it was not a normal text message. I'm expecting a <message> con:text \"Some text\" triple in that message."));
+                    bus.publish(new ConnectionMessageCommandEvent(con,
+                            "Whatever you sent me there, it was not a normal text message. I'm expecting a <message> con:text \"Some text\" triple in that message."));
                 } else {
                     logger.trace("Handling Message to eliza...");
                     bus.publish(new MessageToElizaEvent(con, message));
                 }
             } catch (Exception e) {
                 // error: send an error message
-                bus.publish(new ConnectionMessageCommandEvent(con, "Did not understand your command '" + message
-                        + "': " + e.getClass().getSimpleName() + ":" + e.getMessage()));
+                bus.publish(new ConnectionMessageCommandEvent(con, "Did not understand your command '" + message + "': "
+                        + e.getClass().getSimpleName() + ":" + e.getMessage()));
             }
         }
     }

@@ -39,6 +39,7 @@ import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.protocol.message.WonMessage;
 import won.protocol.service.WonNodeInformationService;
 import won.protocol.util.DefaultAtomModelWrapper;
+import won.protocol.util.Prefixer;
 import won.protocol.util.RdfUtils;
 import won.protocol.util.WonRdfUtils;
 import won.protocol.vocabulary.WONMATCH;
@@ -118,7 +119,7 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
         final Dataset debugAtomDataset = atomModelWrapper.copyDatasetWithoutSysinfo();
         final Event origEvent = event;
         logger.debug("creating atom on won node {} with content {} ", wonNodeUri,
-                StringUtils.abbreviate(RdfUtils.toString(debugAtomDataset), 150));
+                StringUtils.abbreviate(RdfUtils.toString(Prefixer.setPrefixes(debugAtomDataset)), 150));
         WonMessage createAtomMessage = createWonMessage(wonNodeInformationService, atomURI, wonNodeUri,
                 debugAtomDataset);
         // remember the atom URI so we can react to success/failure responses
@@ -146,7 +147,8 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
         EventListener failureCallback = event1 -> {
             String textMessage = WonRdfUtils.MessageUtils
                     .getTextMessage(((FailureResponseEvent) event1).getFailureMessage());
-            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", atomURI, ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage);
+            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", atomURI,
+                    ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage);
             EventBotActionUtils.removeFromList(ctx, atomURI, uriListName);
             bus.publish(new AtomCreationFailedEvent(wonNodeUri));
         };

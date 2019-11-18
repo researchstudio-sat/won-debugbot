@@ -39,7 +39,7 @@
         <dependency>
             <groupId>at.researchstudio.sat</groupId>
             <artifactId>won-bot</artifactId>
-            <version>0.6</version>
+            <version>0.7-SNAPSHOT</version>
         </dependency>
 
         <dependency>

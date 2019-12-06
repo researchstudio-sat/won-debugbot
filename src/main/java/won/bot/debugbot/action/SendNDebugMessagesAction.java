@@ -10,7 +10,11 @@
  */
 package won.bot.debugbot.action;
 
+import java.net.URI;
+import java.util.Date;
+
 import org.apache.jena.query.Dataset;
+
 import won.bot.debugbot.event.SendNDebugCommandEvent;
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
@@ -18,22 +22,18 @@ import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.protocol.exception.WonMessageBuilderException;
 import won.protocol.message.WonMessage;
-import won.protocol.message.WonMessageBuilder;
-import won.protocol.service.WonNodeInformationService;
+import won.protocol.message.builder.WonMessageBuilder;
 import won.protocol.util.WonRdfUtils;
-
-import java.net.URI;
-import java.util.Date;
 
 /**
  * Created by fkleedorfer on 09.06.2016.
  */
 public class SendNDebugMessagesAction extends BaseEventBotAction {
-    String[] messages = { "one", "two" };
-    private long delayBetweenMessages = 1000;
+    private final String[] messages;
+    private final long delayBetweenMessages;
 
     public SendNDebugMessagesAction(final EventListenerContext eventListenerContext, long delayBetweenMessages,
-                                    String... messages) {
+                    String... messages) {
         super(eventListenerContext);
         this.delayBetweenMessages = delayBetweenMessages;
         this.messages = messages;
@@ -58,23 +58,20 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
 
     private Runnable createMessageTask(final URI connectionURI, final String messageText) {
         return () -> getEventListenerContext().getWonMessageSender()
-                        .sendWonMessage(createWonMessage(connectionURI, messageText));
+                        .prepareAndSendMessage(createWonMessage(connectionURI, messageText));
     }
 
     private WonMessage createWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
-        WonNodeInformationService wonNodeInformationService = getEventListenerContext().getWonNodeInformationService();
         Dataset connectionRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(connectionURI);
-        URI targetAtom = WonRdfUtils.ConnectionUtils.getTargetAtomURIFromConnection(connectionRDF, connectionURI);
-        URI localAtom = WonRdfUtils.ConnectionUtils.getLocalAtomURIFromConnection(connectionRDF, connectionURI);
-        URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
-        Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
-        URI messageURI = wonNodeInformationService.generateEventURI(wonNode);
+        URI targetSocket = WonRdfUtils.ConnectionUtils.getTargetSocketURIFromConnection(connectionRDF, connectionURI);
+        URI socket = WonRdfUtils.ConnectionUtils.getSocketURIFromConnection(connectionRDF, connectionURI);
         return WonMessageBuilder
-                        .setMessagePropertiesForConnectionMessage(messageURI, connectionURI, localAtom, wonNode,
-                                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF,
-                                                        connectionURI),
-                                        targetAtom,
-                                        WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
+                        .connectionMessage()
+                        .sockets()
+                        /**/.sender(socket)
+                        /**/.recipient(targetSocket)
+                        .content()
+                        /**/.text(message)
                         .build();
     }
 }

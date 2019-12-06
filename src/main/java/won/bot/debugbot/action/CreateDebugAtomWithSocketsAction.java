@@ -10,10 +10,14 @@
  */
 package won.bot.debugbot.action;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import won.bot.debugbot.enums.HintType;
 import won.bot.debugbot.event.AtomCreatedEventForDebugConnect;
 import won.bot.debugbot.event.AtomCreatedEventForDebugHint;
@@ -29,18 +33,16 @@ import won.bot.framework.eventbot.event.AtomCreationFailedEvent;
 import won.bot.framework.eventbot.event.AtomSpecificEvent;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
-import won.bot.framework.eventbot.event.impl.matcher.AtomCreatedEventForMatcher;
 import won.bot.framework.eventbot.event.impl.wonmessage.FailureResponseEvent;
 import won.bot.framework.eventbot.listener.EventListener;
+import won.bot.framework.extensions.matcher.MatcherExtensionAtomCreatedEvent;
 import won.protocol.message.WonMessage;
 import won.protocol.service.WonNodeInformationService;
 import won.protocol.util.DefaultAtomModelWrapper;
+import won.protocol.util.Prefixer;
 import won.protocol.util.RdfUtils;
 import won.protocol.util.WonRdfUtils;
 import won.protocol.vocabulary.WONMATCH;
-
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
 
 /**
  * Creates an atom with the specified sockets. If no socket is specified, the
@@ -48,20 +50,20 @@ import java.net.URI;
  */
 public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private Counter counter = new CounterImpl("DebugAtomsCounter");
+    private final Counter counter = new CounterImpl("DebugAtomsCounter");
     private boolean isInitialForHint;
     private boolean isInitialForConnect;
 
     public CreateDebugAtomWithSocketsAction(final EventListenerContext eventListenerContext,
-                                            final boolean usedForTesting, final boolean doNotMatch, final URI... sockets) {
+                    final boolean usedForTesting, final boolean doNotMatch, final URI... sockets) {
         super(eventListenerContext, eventListenerContext.getBotContextWrapper().getAtomCreateListName(), usedForTesting,
                         doNotMatch, sockets);
     }
 
     @Override
     protected void doRun(Event event, EventListener executingListener) throws Exception {
-        String replyText = "";
-        URI reactingToAtomUriTmp = null;
+        String replyText;
+        URI reactingToAtomUriTmp;
         Dataset atomDataset = null;
         if (event instanceof AtomSpecificEvent) {
             reactingToAtomUriTmp = ((AtomSpecificEvent) event).getAtomURI();
@@ -69,8 +71,8 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
             logger.warn("could not process non-atom specific event {}", event);
             return;
         }
-        if (event instanceof AtomCreatedEventForMatcher) {
-            atomDataset = ((AtomCreatedEventForMatcher) event).getAtomData();
+        if (event instanceof MatcherExtensionAtomCreatedEvent) {
+            atomDataset = ((MatcherExtensionAtomCreatedEvent) event).getAtomData();
         } else if (event instanceof HintDebugCommandEvent) {
             reactingToAtomUriTmp = ((HintDebugCommandEvent) event).getTargetAtomURI();
         } else if (event instanceof ConnectDebugCommandEvent) {
@@ -115,12 +117,12 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
             atomModelWrapper.addSocket(atomURI + "#socket" + i, socket.toString());
             i++;
         }
-        final Dataset debugAtomDataset = atomModelWrapper.copyDataset();
+        final Dataset debugAtomDataset = atomModelWrapper.copyDatasetWithoutSysinfo();
         final Event origEvent = event;
         logger.debug("creating atom on won node {} with content {} ", wonNodeUri,
-                        StringUtils.abbreviate(RdfUtils.toString(debugAtomDataset), 150));
-        WonMessage createAtomMessage = createWonMessage(wonNodeInformationService, atomURI, wonNodeUri,
-                        debugAtomDataset);
+                        StringUtils.abbreviate(RdfUtils.toString(Prefixer.setPrefixes(debugAtomDataset)), 150));
+        WonMessage createAtomMessage = createWonMessage(atomURI, wonNodeUri, debugAtomDataset);
+        createAtomMessage = getEventListenerContext().getWonMessageSender().prepareMessage(createAtomMessage);
         // remember the atom URI so we can react to success/failure responses
         EventBotActionUtils.rememberInList(ctx, atomURI, uriListName);
         EventListener successCallback = event12 -> {
@@ -131,12 +133,10 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
                 HintType hintType = HintType.RANDOM_SOCKET_HINT; // default: hint to random compatible sockets
                 if (origEvent instanceof HintDebugCommandEvent) {
                     hintType = ((HintDebugCommandEvent) origEvent).getHintType();
-                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri,
-                                    debugAtomDataset,
+                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri, debugAtomDataset,
                                     hintType));
                 } else {
-                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri,
-                                    debugAtomDataset,
+                    bus.publish(new AtomCreatedEventForDebugHint(origEvent, atomURI, wonNodeUri, debugAtomDataset,
                                     hintType));
                 }
             } else if ((origEvent instanceof ConnectDebugCommandEvent) || isInitialForConnect) {
@@ -148,14 +148,14 @@ public class CreateDebugAtomWithSocketsAction extends AbstractCreateAtomAction {
         EventListener failureCallback = event1 -> {
             String textMessage = WonRdfUtils.MessageUtils
                             .getTextMessage(((FailureResponseEvent) event1).getFailureMessage());
-            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", new Object[] {
-                            atomURI, ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage });
+            logger.debug("atom creation failed for atom URI {}, original message URI {}: {}", atomURI,
+                            ((FailureResponseEvent) event1).getOriginalMessageURI(), textMessage);
             EventBotActionUtils.removeFromList(ctx, atomURI, uriListName);
             bus.publish(new AtomCreationFailedEvent(wonNodeUri));
         };
         EventBotActionUtils.makeAndSubscribeResponseListener(createAtomMessage, successCallback, failureCallback, ctx);
         logger.debug("registered listeners for response to message URI {}", createAtomMessage.getMessageURI());
-        ctx.getWonMessageSender().sendWonMessage(createAtomMessage);
+        ctx.getWonMessageSender().sendMessage(createAtomMessage);
         logger.debug("atom creation message sent with message URI {}", createAtomMessage.getMessageURI());
     }
 

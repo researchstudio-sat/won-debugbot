@@ -19,8 +19,7 @@ import won.bot.framework.eventbot.listener.EventListener;
 import java.net.URI;
 
 /**
- * Expects a SetChattinessDebugCommandEvent and sets the chattiness for the
- * connection of the event.
+ * Expects a SetChattinessDebugCommandEvent and sets the chattiness for the connection of the event.
  */
 public class SetChattinessAction extends BaseEventBotAction {
     public SetChattinessAction(final EventListenerContext eventListenerContext) {
@@ -33,9 +32,11 @@ public class SetChattinessAction extends BaseEventBotAction {
             SetChattinessDebugCommandEvent chattinessDebugCommandEvent = (SetChattinessDebugCommandEvent) event;
             URI uri = chattinessDebugCommandEvent.getConnectionURI();
             if (chattinessDebugCommandEvent.isChatty()) {
-                getEventListenerContext().getBotContext().saveToObjectMap(SendChattyMessageAction.KEY_CHATTY_CONNECTIONS, uri.toString(), uri);
+                getEventListenerContext().getBotContext()
+                        .saveToObjectMap(SendChattyMessageAction.KEY_CHATTY_CONNECTIONS, uri.toString(), uri);
             } else {
-                getEventListenerContext().getBotContext().removeFromObjectMap(SendChattyMessageAction.KEY_CHATTY_CONNECTIONS, uri.toString());
+                getEventListenerContext().getBotContext()
+                        .removeFromObjectMap(SendChattyMessageAction.KEY_CHATTY_CONNECTIONS, uri.toString());
             }
         }
     }

@@ -10,6 +10,8 @@
  */
 package won.bot.debugbot.action;
 
+import java.net.URI;
+
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.event.ConnectionSpecificEvent;
@@ -20,10 +22,10 @@ import won.bot.framework.eventbot.listener.EventListener;
  *
  */
 public class RecordMessageReceivedTimeAction extends BaseEventBotAction {
-    private MessageTimingManager timingManager;
+    private final MessageTimingManager timingManager;
 
     public RecordMessageReceivedTimeAction(final EventListenerContext eventListenerContext,
-                    MessageTimingManager timingManager) {
+            MessageTimingManager timingManager) {
         super(eventListenerContext);
         this.timingManager = timingManager;
     }
@@ -31,7 +33,10 @@ public class RecordMessageReceivedTimeAction extends BaseEventBotAction {
     @Override
     protected void doRun(final Event event, EventListener executingListener) throws Exception {
         if (event instanceof ConnectionSpecificEvent) {
-            timingManager.updateMessageTimeForMessageReceived(((ConnectionSpecificEvent) event).getConnectionURI());
+            URI conUri = ((ConnectionSpecificEvent) event).getConnectionURI();
+            if (conUri != null) {
+                timingManager.updateMessageTimeForMessageReceived(conUri);
+            }
         }
     }
 }

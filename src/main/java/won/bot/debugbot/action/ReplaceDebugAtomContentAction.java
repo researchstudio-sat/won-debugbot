@@ -10,11 +10,15 @@
  */
 package won.bot.debugbot.action;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.jena.query.Dataset;
 import org.apache.jena.query.DatasetFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import won.bot.debugbot.event.ReplaceDebugAtomContentCommandEvent;
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
@@ -25,18 +29,15 @@ import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.command.replace.ReplaceCommandEvent;
 import won.bot.framework.eventbot.listener.EventListener;
 import won.protocol.util.DefaultAtomModelWrapper;
+import won.protocol.util.Prefixer;
 import won.protocol.util.RdfUtils;
 
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-
 /**
- * Creates an atom with the specified sockets. If no socket is specified, the
- * chatSocket will be used.
+ * Creates an atom with the specified sockets. If no socket is specified, the chatSocket will be used.
  */
 public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private Counter counter = new CounterImpl("DebugAtomsReplaceCounter");
+    private final Counter counter = new CounterImpl("DebugAtomsReplaceCounter");
 
     public ReplaceDebugAtomContentAction(final EventListenerContext eventListenerContext) {
         super(eventListenerContext);
@@ -51,12 +52,11 @@ public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
         ReplaceDebugAtomContentCommandEvent replaceDebugCommandEvent = (ReplaceDebugAtomContentCommandEvent) event;
         URI myAtomUri = replaceDebugCommandEvent.getCon().getAtomURI();
         Dataset atomDataset = getEventListenerContext().getLinkedDataSource().getDataForResource(myAtomUri);
-        String titleString = null;
         if (atomDataset == null) {
             throw new IllegalStateException("Cannot edit my atom " + myAtomUri + " : retrieved dataset is null");
         }
         DefaultAtomModelWrapper atomModelWrapper = new DefaultAtomModelWrapper(atomDataset);
-        titleString = atomModelWrapper.getSomeTitleFromIsOrAll("en", "de");
+        String titleString = atomModelWrapper.getSomeTitleFromIsOrAll("en", "de");
         if (titleString != null) {
             titleString = titleString.replaceFirst("( \\(edit #\\d+\\)|$)", " (edit #" + counter.increment() + ")");
         } else {
@@ -69,7 +69,7 @@ public class ReplaceDebugAtomContentAction extends BaseEventBotAction {
         EventBus bus = ctx.getEventBus();
         final URI wonNodeUri = URI.create(atomModelWrapper.getWonNodeUri());
         logger.debug("replacing atom on won node {} with content {} ", wonNodeUri,
-                        StringUtils.abbreviate(RdfUtils.toString(onlyContentGraphDataset), 150));
+                StringUtils.abbreviate(RdfUtils.toString(Prefixer.setPrefixes(onlyContentGraphDataset)), 150));
         bus.publish(new ReplaceCommandEvent(onlyContentGraphDataset));
     }
 }

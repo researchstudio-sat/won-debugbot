@@ -8,7 +8,7 @@ import won.bot.framework.eventbot.event.impl.crawlconnection.CrawlConnectionComm
 import won.protocol.model.Connection;
 
 public abstract class SendMessageOnCrawlResultAction extends ProcessCrawlResultAction {
-    private Connection con;
+    private final Connection con;
 
     public SendMessageOnCrawlResultAction(EventListenerContext eventListenerContext, Connection con) {
         super(eventListenerContext);

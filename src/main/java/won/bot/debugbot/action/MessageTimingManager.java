@@ -19,24 +19,24 @@ import java.util.Date;
  * Created by fkleedorfer on 10.06.2016.
  */
 public class MessageTimingManager {
-    public static final String KEY_LAST_MESSAGE_IN_TIMESTAMPS = "lastMessageInTimestamps";
-    public static final String KEY_LAST_MESSAGE_OUT_TIMESTAMPS = "lastMessageOutTimestamps";
-    private EventListenerContext context;
+    private static final String KEY_LAST_MESSAGE_IN_TIMESTAMPS = "lastMessageInTimestamps";
+    private static final String KEY_LAST_MESSAGE_OUT_TIMESTAMPS = "lastMessageOutTimestamps";
+    private final EventListenerContext context;
 
     public MessageTimingManager(final EventListenerContext context) {
         this.context = context;
     }
 
     public enum InactivityPeriod {
-        ACTIVE(60 * 1000, 60 * 1000), SHORT(5 * 60 * 1000, 60 * 1000), LONG(10 * 60 * 1000, 120 * 1000),
-        TOO_LONG(-1, 120 * 1000);
+        ACTIVE(60 * 1000, 60 * 1000), SHORT(5 * 60 * 1000, 60 * 1000), LONG(10 * 60 * 1000, 120 * 1000), TOO_LONG(-1,
+                120 * 1000);
         InactivityPeriod(final long timeout, final long minimalPauseBetweenMessages) {
             this.timeout = timeout;
             this.minimalPauseBetweenMessages = minimalPauseBetweenMessages;
         }
 
-        private long timeout;
-        private long minimalPauseBetweenMessages;
+        private final long timeout;
+        private final long minimalPauseBetweenMessages;
 
         public long getTimeout() {
             return timeout;
@@ -78,22 +78,22 @@ public class MessageTimingManager {
 
     public boolean isWaitedLongEnough(URI connectionUri) {
         Date lastSent = (Date) context.getBotContext().loadFromObjectMap(KEY_LAST_MESSAGE_OUT_TIMESTAMPS,
-                        connectionUri.toString());
+                connectionUri.toString());
         if (lastSent == null)
             return false; // avoid sending messages on every actEvent if too many atoms are connected
         return getInactivityPeriodOfPartner(connectionUri)
-                        .isPauseLongEnough(System.currentTimeMillis() - lastSent.getTime());
+                .isPauseLongEnough(System.currentTimeMillis() - lastSent.getTime());
     }
 
     public InactivityPeriod getInactivityPeriodOfPartner(URI connectionUri) {
         Date lastIn = (Date) context.getBotContext().loadFromObjectMap(KEY_LAST_MESSAGE_IN_TIMESTAMPS,
-                        connectionUri.toString());
+                connectionUri.toString());
         return InactivityPeriod.getInactivityPeriod(lastIn);
     }
 
     public InactivityPeriod getInactivityPeriodOfSelf(URI connectionUri) {
         Date lastOut = (Date) context.getBotContext().loadFromObjectMap(KEY_LAST_MESSAGE_OUT_TIMESTAMPS,
-                        connectionUri.toString());
+                connectionUri.toString());
         return InactivityPeriod.getInactivityPeriod(lastOut);
     }
 

@@ -14,34 +14,22 @@ import org.apache.jena.query.Dataset;
 import won.bot.debugbot.enums.HintType;
 import won.bot.framework.eventbot.event.BaseAtomSpecificEvent;
 import won.bot.framework.eventbot.event.Event;
+import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
 
 import java.net.URI;
 
 /**
  *
  */
-public class AtomCreatedEventForDebugHint extends BaseAtomSpecificEvent {
-    private final URI wonNodeUri;
-    private final Dataset atomDataset;
+public class AtomCreatedEventForDebugHint extends AtomCreatedEvent {
     private final HintType hintType;
     private final Event cause;
 
-    public AtomCreatedEventForDebugHint(Event cause, final URI atomURI, final URI wonNodeUri,
-                                        final Dataset atomDataset,
-                                        final HintType hintType) {
-        super(atomURI);
+    public AtomCreatedEventForDebugHint(Event cause, final URI atomURI, final URI wonNodeUri, final Dataset atomDataset,
+            final HintType hintType) {
+        super(atomURI, wonNodeUri, atomDataset, null);
         this.cause = cause;
-        this.wonNodeUri = wonNodeUri;
-        this.atomDataset = atomDataset;
         this.hintType = hintType;
-    }
-
-    public URI getWonNodeUri() {
-        return wonNodeUri;
-    }
-
-    public Dataset getAtomDataset() {
-        return atomDataset;
     }
 
     public HintType getHintType() {

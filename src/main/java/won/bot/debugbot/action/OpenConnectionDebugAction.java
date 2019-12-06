@@ -10,9 +10,17 @@
  */
 package won.bot.debugbot.action;
 
+import java.lang.invoke.MethodHandles;
+import java.net.URI;
+import java.util.Date;
+import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.apache.jena.query.Dataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import won.bot.framework.eventbot.EventListenerContext;
 import won.bot.framework.eventbot.action.BaseEventBotAction;
 import won.bot.framework.eventbot.event.ConnectionSpecificEvent;
@@ -22,29 +30,25 @@ import won.bot.framework.eventbot.event.impl.wonmessage.WonMessageReceivedOnConn
 import won.bot.framework.eventbot.listener.EventListener;
 import won.protocol.exception.WonMessageBuilderException;
 import won.protocol.message.WonMessage;
-import won.protocol.message.WonMessageBuilder;
-import won.protocol.service.WonNodeInformationService;
+import won.protocol.message.builder.WonMessageBuilder;
+import won.protocol.model.Connection;
+import won.protocol.model.ConnectionState;
 import won.protocol.util.WonRdfUtils;
-
-import java.lang.invoke.MethodHandles;
-import java.net.URI;
-import java.util.Date;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import won.protocol.util.linkeddata.WonLinkedDataUtils;
 
 /**
  * User: fkleedorfer Date: 30.01.14
  */
 public class OpenConnectionDebugAction extends BaseEventBotAction {
     private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
-    private String welcomeMessage;
-    private Pattern PATTERN_WAIT = Pattern.compile("wait(\\s+([0-9]{1,2}))?");
-    private Pattern PATTERN_DENY = Pattern.compile("deny");
-    private Pattern PATTERN_IGNORE = Pattern.compile("ignore");
-    private String welcomeHelpMessage;
+    private final String welcomeMessage;
+    private final Pattern PATTERN_WAIT = Pattern.compile("wait(\\s+([0-9]{1,2}))?");
+    private final Pattern PATTERN_DENY = Pattern.compile("deny");
+    private final Pattern PATTERN_IGNORE = Pattern.compile("ignore");
+    private final String welcomeHelpMessage;
 
     public OpenConnectionDebugAction(final EventListenerContext context, final String welcomeMessage,
-                                     final String welcomeHelpMessage) {
+                    final String welcomeHelpMessage) {
         super(context);
         this.welcomeMessage = welcomeMessage;
         this.welcomeHelpMessage = welcomeHelpMessage;
@@ -56,7 +60,9 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
             return;
         }
         if (event instanceof WonMessageReceivedOnConnectionEvent) {
+            WonMessageReceivedOnConnectionEvent specificEvent = (WonMessageReceivedOnConnectionEvent) event;
             WonMessage msg = ((WonMessageReceivedOnConnectionEvent) event).getWonMessage();
+            WonMessageReceivedOnConnectionEvent msgInConEv = (WonMessageReceivedOnConnectionEvent) event;
             String message = WonRdfUtils.MessageUtils.getTextMessage(msg);
             if (message == null) {
                 message = "";
@@ -78,56 +84,54 @@ public class OpenConnectionDebugAction extends BaseEventBotAction {
             ConnectionSpecificEvent connectEvent = (ConnectionSpecificEvent) event;
             logger.debug("auto-replying to connect for connection {}", connectEvent.getConnectionURI());
             URI connectionUri = connectEvent.getConnectionURI();
-            String finalWelcomeMessage = welcomeMessage;
-            if (wait || deny) {
-                finalWelcomeMessage = welcomeMessage + " " + (deny ? "Denying" : "Accepting") + " your request "
-                                + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");
+            Optional<Connection> con = WonLinkedDataUtils.getConnectionForConnectionURI(connectionUri,
+                            getEventListenerContext().getLinkedDataSource());
+            String finalWelcomeMessage;
+            if (con.isPresent() && con.get().getState() == ConnectionState.CONNECTED) {
+                finalWelcomeMessage = "Nice, we are connected!";
+                getEventListenerContext().getWonMessageSender().prepareAndSendMessage(WonMessageBuilder
+                                .connectionMessage()
+                                .sockets().sender(specificEvent.getSocketURI())
+                                .recipient(specificEvent.getTargetSocketURI())
+                                .content().text(finalWelcomeMessage)
+                                .build());
             } else {
-                finalWelcomeMessage = welcomeMessage + " " + welcomeHelpMessage;
-            }
-            final WonMessage toSend = deny ? createCloseWonMessage(connectionUri, finalWelcomeMessage)
-                            : createOpenWonMessage(connectionUri, finalWelcomeMessage);
-            Runnable task = () -> getEventListenerContext().getWonMessageSender().sendWonMessage(toSend);
-            if (wait) {
-                Date when = new Date(System.currentTimeMillis() + waitSeconds * 1000);
-                getEventListenerContext().getTaskScheduler().schedule(task, when);
-            } else {
-                task.run();
+                if (wait || deny) {
+                    finalWelcomeMessage = welcomeMessage + " " + (deny ? "Denying" : "Accepting") + " your request "
+                                    + (wait ? " after a timeout of " + waitSeconds + " seconds" : "");
+                } else {
+                    finalWelcomeMessage = welcomeMessage + " " + welcomeHelpMessage;
+                }
+                final WonMessage toSend = deny ? createCloseWonMessage(connectionUri, finalWelcomeMessage)
+                                : createConnectWonMessage(connectionUri, msgInConEv, finalWelcomeMessage);
+                Runnable task = () -> getEventListenerContext().getWonMessageSender().prepareAndSendMessage(toSend);
+                if (wait) {
+                    Date when = new Date(System.currentTimeMillis() + waitSeconds * 1000);
+                    getEventListenerContext().getTaskScheduler().schedule(task, when);
+                } else {
+                    task.run();
+                }
             }
         }
     }
 
-    private WonMessage createOpenWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
-        WonNodeInformationService wonNodeInformationService = getEventListenerContext().getWonNodeInformationService();
-        Dataset connectionRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(connectionURI);
-        URI targetAtom = WonRdfUtils.ConnectionUtils.getTargetAtomURIFromConnection(connectionRDF, connectionURI);
-        URI localAtom = WonRdfUtils.ConnectionUtils.getLocalAtomURIFromConnection(connectionRDF, connectionURI);
-        URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
-        Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
+    private WonMessage createConnectWonMessage(URI connectionURI, WonMessageReceivedOnConnectionEvent msgInCon,
+                    String message) throws WonMessageBuilderException {
         return WonMessageBuilder
-                        .setMessagePropertiesForOpen(wonNodeInformationService.generateEventURI(wonNode), connectionURI,
-                                        localAtom, wonNode,
-                                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF,
-                                                        connectionURI),
-                                        targetAtom,
-                                        WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
+                        .connect()
+                        .sockets().sender(msgInCon.getSocketURI()).recipient(msgInCon.getTargetSocketURI())
+                        .content().text(message)
                         .build();
     }
 
     private WonMessage createCloseWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
-        WonNodeInformationService wonNodeInformationService = getEventListenerContext().getWonNodeInformationService();
         Dataset connectionRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(connectionURI);
-        URI targetAtom = WonRdfUtils.ConnectionUtils.getTargetAtomURIFromConnection(connectionRDF, connectionURI);
-        URI localAtom = WonRdfUtils.ConnectionUtils.getLocalAtomURIFromConnection(connectionRDF, connectionURI);
-        URI wonNode = WonRdfUtils.ConnectionUtils.getWonNodeURIFromConnection(connectionRDF, connectionURI);
-        Dataset targetAtomRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(targetAtom);
+        URI targetSocket = WonRdfUtils.ConnectionUtils.getTargetSocketURIFromConnection(connectionRDF, connectionURI);
+        URI socket = WonRdfUtils.ConnectionUtils.getSocketURIFromConnection(connectionRDF, connectionURI);
         return WonMessageBuilder
-                        .setMessagePropertiesForClose(wonNodeInformationService.generateEventURI(wonNode),
-                                        connectionURI, localAtom, wonNode,
-                                        WonRdfUtils.ConnectionUtils.getTargetConnectionURIFromConnection(connectionRDF,
-                                                        connectionURI),
-                                        targetAtom,
-                                        WonRdfUtils.AtomUtils.getWonNodeURIFromAtom(targetAtomRDF, targetAtom), message)
+                        .close()
+                        .sockets().sender(socket).recipient(targetSocket)
+                        .content().text(message)
                         .build();
     }
 }

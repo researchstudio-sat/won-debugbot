@@ -58,8 +58,7 @@ public class SendChattyMessageAction extends BaseEventBotAction {
         Set<URI> toRemove = null;
         Collection<Object> chattyConnections = getEventListenerContext().getBotContext()
                 .loadObjectMap(KEY_CHATTY_CONNECTIONS).values();
-        if (chattyConnections == null)
-            return;
+
         theloop: for (Object o : chattyConnections) {
             URI conURI = (URI) o;
             if (random.nextDouble() > probabilityOfSendingMessage) {

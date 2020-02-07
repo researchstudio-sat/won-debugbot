@@ -35,9 +35,8 @@ import won.protocol.util.linkeddata.LinkedDataSource;
 import won.protocol.util.linkeddata.WonLinkedDataUtils;
 
 /**
- * BaseEventBotAction connecting two atoms on the specified sockets or on two
- * other, compatible sockets. Requires an AtomSpecificEvent to run and expeects
- * the atomURI from the event to be associated with another atom URI via the
+ * BaseEventBotAction connecting two atoms on the specified sockets or on two other, compatible sockets. Requires an
+ * AtomSpecificEvent to run and expeects the atomURI from the event to be associated with another atom URI via the
  * botContext.saveToObjectMap method.
  */
 public class ConnectWithAssociatedAtomAction extends BaseEventBotAction {
@@ -47,17 +46,12 @@ public class ConnectWithAssociatedAtomAction extends BaseEventBotAction {
     private final String welcomeMessage;
 
     public ConnectWithAssociatedAtomAction(final EventListenerContext eventListenerContext, final URI targetSocketType,
-                    final URI localSocketType, String welcomeMessage) {
+            final URI localSocketType, String welcomeMessage) {
         super(eventListenerContext);
         Objects.requireNonNull(targetSocketType);
         Objects.requireNonNull(localSocketType);
         this.targetSocketType = Optional.of(targetSocketType);
         this.localSocketType = Optional.of(localSocketType);
-        this.welcomeMessage = welcomeMessage;
-    }
-
-    public ConnectWithAssociatedAtomAction(EventListenerContext eventListenerContext, String welcomeMessage) {
-        super(eventListenerContext);
         this.welcomeMessage = welcomeMessage;
     }
 
@@ -85,39 +79,26 @@ public class ConnectWithAssociatedAtomAction extends BaseEventBotAction {
         LinkedDataSource linkedDataSource = getEventListenerContext().getLinkedDataSource();
         if (localSocketType.isPresent() && targetSocketType.isPresent()) {
             URI localSocket = localSocketType
-                            .map(socketType -> WonLinkedDataUtils
-                                            .getSocketsOfType(fromUri, socketType, linkedDataSource)
-                                            .stream().findFirst())
-                            .orElseThrow(() -> new IllegalStateException("No socket found to connect on " + fromUri))
-                            .get();
+                    .map(socketType -> WonLinkedDataUtils.getSocketsOfType(fromUri, socketType, linkedDataSource)
+                            .stream().findFirst())
+                    .orElseThrow(() -> new IllegalStateException("No socket found to connect on " + fromUri)).get();
             URI targetSocket = targetSocketType
-                            .map(socketType -> WonLinkedDataUtils.getSocketsOfType(toUri, socketType, linkedDataSource)
-                                            .stream()
-                                            .findFirst())
-                            .orElseThrow(() -> new IllegalStateException("No socket found to connect on " + fromUri))
-                            .get();
-            return Optional.of(WonMessageBuilder
-                            .connect()
-                            .sockets()
-                            /**/.sender(localSocket)
-                            /**/.recipient(targetSocket)
-                            .content().text(welcomeMessage).build());
+                    .map(socketType -> WonLinkedDataUtils.getSocketsOfType(toUri, socketType, linkedDataSource).stream()
+                            .findFirst())
+                    .orElseThrow(() -> new IllegalStateException("No socket found to connect on " + fromUri)).get();
+            return Optional.of(WonMessageBuilder.connect().sockets()/**/.sender(localSocket)/**/.recipient(targetSocket)
+                    .content().text(welcomeMessage).build());
         }
         // no sockets specified or specified sockets not supported. try a random
         // compatibly pair
         Set<Pair<URI>> compatibleSockets = WonLinkedDataUtils.getCompatibleSocketsForAtoms(linkedDataSource, fromUri,
-                        toUri);
+                toUri);
         if (!compatibleSockets.isEmpty()) {
             List<Pair<URI>> shuffledSocketPairs = new ArrayList<>(compatibleSockets);
             Collections.shuffle(shuffledSocketPairs);
             Pair<URI> sockets = shuffledSocketPairs.get(0);
-            return Optional.of(WonMessageBuilder
-                            .connect()
-                            .sockets()
-                            /**/.sender(sockets.getFirst())
-                            /**/.recipient(sockets.getSecond())
-                            .content().text(welcomeMessage)
-                            .build());
+            return Optional.of(WonMessageBuilder.connect().sockets()/**/.sender(sockets.getFirst())
+                    /**/.recipient(sockets.getSecond()).content().text(welcomeMessage).build());
         }
         return Optional.empty();
     }

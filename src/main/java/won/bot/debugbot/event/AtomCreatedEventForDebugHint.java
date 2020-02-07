@@ -12,7 +12,6 @@ package won.bot.debugbot.event;
 
 import org.apache.jena.query.Dataset;
 import won.bot.debugbot.enums.HintType;
-import won.bot.framework.eventbot.event.BaseAtomSpecificEvent;
 import won.bot.framework.eventbot.event.Event;
 import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
 

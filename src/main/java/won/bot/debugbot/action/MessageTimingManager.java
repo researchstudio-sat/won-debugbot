@@ -38,14 +38,6 @@ public class MessageTimingManager {
         private final long timeout;
         private final long minimalPauseBetweenMessages;
 
-        public long getTimeout() {
-            return timeout;
-        }
-
-        public long getMinimalPauseBetweenMessages() {
-            return minimalPauseBetweenMessages;
-        }
-
         public boolean isWithin(long inactivityInMillis) {
             return inactivityInMillis <= timeout;
         }
@@ -89,12 +81,6 @@ public class MessageTimingManager {
         Date lastIn = (Date) context.getBotContext().loadFromObjectMap(KEY_LAST_MESSAGE_IN_TIMESTAMPS,
                 connectionUri.toString());
         return InactivityPeriod.getInactivityPeriod(lastIn);
-    }
-
-    public InactivityPeriod getInactivityPeriodOfSelf(URI connectionUri) {
-        Date lastOut = (Date) context.getBotContext().loadFromObjectMap(KEY_LAST_MESSAGE_OUT_TIMESTAMPS,
-                connectionUri.toString());
-        return InactivityPeriod.getInactivityPeriod(lastOut);
     }
 
     public void updateMessageTimeForMessageSent(URI connectionUri) {

@@ -32,7 +32,7 @@ import org.springframework.util.StopWatch;
 
 import won.bot.debugbot.action.AnswerWithElizaAction;
 import won.bot.debugbot.action.ConnectWithAssociatedAtomAction;
-import won.bot.debugbot.action.CreateDebugAtomWithSocketsAction;
+import won.bot.debugbot.action.CreateDebugAtomAction;
 import won.bot.debugbot.action.DebugBotIncomingGenericMessageAction;
 import won.bot.debugbot.action.HintAssociatedAtomAction;
 import won.bot.debugbot.action.MessageTimingManager;
@@ -401,7 +401,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                     // we iterate over our atoms and see which of them are connected to the
                     // remote
                     // atom
-                    List<URI> myatoms = ctx.getBotContextWrapper().getAtomCreateList();
+                    Set<URI> myatoms = ctx.getBotContextWrapper().retrieveAllAtomUris();
                     Set<URI> targetConnections = myatoms.stream()
                             // don't inject into the current connection
                             .filter(uri -> !connection.getAtomURI().equals(uri)).map(uri -> {
@@ -437,13 +437,11 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
         // filter to prevent reacting to serviceAtom<->ownedAtom events;
         NotFilter noInternalServiceAtomEventFilter = getNoInternalServiceAtomEventFilter();
         // // setup for connecting to new atoms
-        CreateDebugAtomWithSocketsAction initialConnector = new CreateDebugAtomWithSocketsAction(ctx, true, true,
-                SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI(), SocketType.BuddySocket.getURI());
+        CreateDebugAtomAction initialConnector = new CreateDebugAtomAction(ctx);
         initialConnector.setIsInitialForConnect(true);
         bus.subscribe(MatcherExtensionAtomCreatedEvent.class, noOwnAtomsFilter, initialConnector);
         // // setup for sending hints to new atoms
-        CreateDebugAtomWithSocketsAction initialHinter = new CreateDebugAtomWithSocketsAction(ctx, true, true,
-                SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI(), SocketType.BuddySocket.getURI());
+        CreateDebugAtomAction initialHinter = new CreateDebugAtomAction(ctx);
         initialHinter.setIsInitialForHint(true);
         bus.subscribe(MatcherExtensionAtomCreatedEvent.class, noOwnAtomsFilter, initialHinter);
         // as soon as the echo atom triggered by debug connect created, connect to
@@ -499,8 +497,7 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
         // react to the hint and connect commands by creating an atom (it will fire
         // correct atom created for connect/hint
         // events)
-        CreateDebugAtomWithSocketsAction atomCreatorAction = new CreateDebugAtomWithSocketsAction(ctx, true, true,
-                SocketType.ChatSocket.getURI(), SocketType.HoldableSocket.getURI());
+        CreateDebugAtomAction atomCreatorAction = new CreateDebugAtomAction(ctx);
         bus.subscribe(HintDebugCommandEvent.class, atomCreatorAction);
         bus.subscribe(ConnectDebugCommandEvent.class, atomCreatorAction);
         // set the chattiness of the connection

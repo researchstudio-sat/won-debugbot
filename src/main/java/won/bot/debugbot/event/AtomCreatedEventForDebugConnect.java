@@ -11,7 +11,6 @@
 package won.bot.debugbot.event;
 
 import org.apache.jena.query.Dataset;
-import won.bot.framework.eventbot.event.BaseAtomSpecificEvent;
 import won.bot.framework.eventbot.event.impl.atomlifecycle.AtomCreatedEvent;
 import won.protocol.model.SocketType;
 

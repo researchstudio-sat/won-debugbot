@@ -33,7 +33,7 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
     private final long delayBetweenMessages;
 
     public SendNDebugMessagesAction(final EventListenerContext eventListenerContext, long delayBetweenMessages,
-                    String... messages) {
+            String... messages) {
         super(eventListenerContext);
         this.delayBetweenMessages = delayBetweenMessages;
         this.messages = messages;
@@ -51,27 +51,21 @@ public class SendNDebugMessagesAction extends BaseEventBotAction {
                 delay += delayBetweenMessages;
                 String messageText = this.messages[i];
                 getEventListenerContext().getTaskScheduler().schedule(createMessageTask(connUri, messageText),
-                                new Date(System.currentTimeMillis() + delay));
+                        new Date(System.currentTimeMillis() + delay));
             }
         }
     }
 
     private Runnable createMessageTask(final URI connectionURI, final String messageText) {
         return () -> getEventListenerContext().getWonMessageSender()
-                        .prepareAndSendMessage(createWonMessage(connectionURI, messageText));
+                .prepareAndSendMessage(createWonMessage(connectionURI, messageText));
     }
 
     private WonMessage createWonMessage(URI connectionURI, String message) throws WonMessageBuilderException {
         Dataset connectionRDF = getEventListenerContext().getLinkedDataSource().getDataForResource(connectionURI);
         URI targetSocket = WonRdfUtils.ConnectionUtils.getTargetSocketURIFromConnection(connectionRDF, connectionURI);
         URI socket = WonRdfUtils.ConnectionUtils.getSocketURIFromConnection(connectionRDF, connectionURI);
-        return WonMessageBuilder
-                        .connectionMessage()
-                        .sockets()
-                        /**/.sender(socket)
-                        /**/.recipient(targetSocket)
-                        .content()
-                        /**/.text(message)
-                        .build();
+        return WonMessageBuilder.connectionMessage().sockets()/**/.sender(socket)/**/.recipient(targetSocket).content()
+                /**/.text(message).build();
     }
 }

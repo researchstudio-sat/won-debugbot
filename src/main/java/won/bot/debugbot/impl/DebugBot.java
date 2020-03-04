@@ -10,13 +10,18 @@
  */
 package won.bot.debugbot.impl;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
+import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -96,6 +101,7 @@ import won.protocol.agreement.effect.MessageEffect;
 import won.protocol.model.Connection;
 import won.protocol.model.ConnectionState;
 import won.protocol.model.SocketType;
+import won.protocol.util.RdfUtils;
 import won.protocol.util.WonConversationUtils;
 import won.protocol.util.WonRdfUtils;
 import won.protocol.util.linkeddata.WonLinkedDataUtils;
@@ -240,9 +246,9 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                             int n = Integer.parseInt(nStr);
                             bus.publish(new SendNDebugCommandEvent(connection, n));
                         }));
-        botCommands.add(new PatternMatcherTextMessageCommand("validate (ttl)",
+        botCommands.add(new PatternMatcherTextMessageCommand("validate (attach)",
                         "download the connection data and validate it",
-                        Pattern.compile("^validate(\\s+(ttl))?$", Pattern.CASE_INSENSITIVE),
+                        Pattern.compile("^validate(\\s+(attach))?$", Pattern.CASE_INSENSITIVE),
                         (Connection connection, Matcher matcher) -> {
                             bus.publish(new ConnectionMessageCommandEvent(connection,
                                             "ok, I'll validate the connection - but I'll need to crawl the connection data first, please be patient."));
@@ -270,20 +276,35 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                                                         boolean valid = validator.validate(
                                                                         successEvent.getCrawledData(),
                                                                         message);
-                                                        if (matcher.matches()) {
-                                                            String param = matcher.group(2);
-                                                            if ("ttl".equals(param)) {
-                                                                // add ttl as file
-                                                                // attachment to message
-                                                            }
-                                                        }
                                                         String successMessage = "Connection "
                                                                         + command.getConnectionURI()
                                                                         + " is valid: " + valid
                                                                         + " "
                                                                         + message.toString();
-                                                        return WonRdfUtils.MessageUtils
-                                                                        .textMessage(successMessage);
+                                                        if (matcher.matches()) {
+                                                            String param = matcher.group(2);
+                                                            if ("attach".equals(param)) {
+                                                                // add data as file
+                                                                // attachment to message
+                                                                String dataSetInput = RdfUtils
+                                                                                .toString(successEvent
+                                                                                                .getCrawledData());
+                                                                Date date = new Date();
+                                                                File file = new File("conversationData-"
+                                                                                + date.getTime() + ".txt");
+                                                                FileWriter writer = new FileWriter(file);
+                                                                writer.write(dataSetInput);
+                                                                writer.close();
+                                                                byte[] fileContent = Files.readAllBytes(file.toPath());
+                                                                String encodedString = Base64.getEncoder()
+                                                                                .encodeToString(fileContent);
+                                                                return WonRdfUtils.MessageUtils
+                                                                                .fileMessage(encodedString,
+                                                                                                file.getName(),
+                                                                                                successMessage);
+                                                            }
+                                                        }
+                                                        return WonRdfUtils.MessageUtils.textMessage(successMessage);
                                                     } catch (Exception e) {
                                                         return WonRdfUtils.MessageUtils
                                                                         .textMessage("Caught exception during validation: "

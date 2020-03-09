@@ -10,11 +10,8 @@
  */
 package won.bot.debugbot.impl;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
-import java.nio.file.Files;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -290,17 +287,15 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                                                                                 .toString(successEvent
                                                                                                 .getCrawledData());
                                                                 Date date = new Date();
-                                                                File file = new File("conversationData-"
-                                                                                + date.getTime() + ".txt");
-                                                                FileWriter writer = new FileWriter(file);
-                                                                writer.write(dataSetInput);
-                                                                writer.close();
-                                                                byte[] fileContent = Files.readAllBytes(file.toPath());
+                                                                String fileName = "conversationData-" + date.getTime()
+                                                                                + ".trig";
+                                                                byte[] fileContent = dataSetInput.getBytes("UTF-8");
                                                                 String encodedString = Base64.getEncoder()
                                                                                 .encodeToString(fileContent);
                                                                 return WonRdfUtils.MessageUtils
                                                                                 .fileMessage(encodedString,
-                                                                                                file.getName(),
+                                                                                                fileName,
+                                                                                                "application/trig",
                                                                                                 successMessage);
                                                             }
                                                         }

@@ -28,3 +28,6 @@ owner-trusted-certs.jks
 /target/
 /.idea/
 *.iml
+
+# validation files
+conversationData-*.txt

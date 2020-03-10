@@ -10,6 +10,7 @@
  */
 package won.bot.debugbot.impl;
 
+import java.io.StringWriter;
 import java.lang.invoke.MethodHandles;
 import java.net.URI;
 import java.text.DecimalFormat;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 import org.apache.jena.query.Dataset;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.riot.RDFDataMgr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.StopWatch;
@@ -98,10 +100,10 @@ import won.protocol.agreement.effect.MessageEffect;
 import won.protocol.model.Connection;
 import won.protocol.model.ConnectionState;
 import won.protocol.model.SocketType;
-import won.protocol.util.RdfUtils;
 import won.protocol.util.WonConversationUtils;
 import won.protocol.util.WonRdfUtils;
 import won.protocol.util.linkeddata.WonLinkedDataUtils;
+import won.protocol.util.pretty.Lang_WON;
 import won.protocol.validation.WonConnectionValidator;
 
 /**
@@ -274,7 +276,11 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                                             if ("attach".equals(param)) {
                                                 // add data as file
                                                 // attachment to message
-                                                String dataSetInput = RdfUtils.toString(successEvent.getCrawledData());
+                                                StringWriter writer = new StringWriter();
+                                                Lang_WON.init();
+                                                RDFDataMgr.write(writer, successEvent.getCrawledData(),
+                                                                Lang_WON.TRIG_WON_CONVERSATION);
+                                                String dataSetInput = writer.toString();
                                                 Date date = new Date();
                                                 String fileName = "conversationData-" + date.getTime() + ".trig";
                                                 byte[] fileContent = dataSetInput.getBytes("UTF-8");
@@ -319,30 +325,34 @@ public class DebugBot extends EventBot implements MatcherExtension, TextMessageC
                                             String successMessage = "Retrieved datased for connection: ";
                                             Dataset dataSet = successEvent.getCrawledData();
                                             AgreementProtocolState agreementState = AgreementProtocolState.of(dataSet);
-                                            String dataSetString = new String();
+                                            String datasetString = new String();
                                             String filePrefix = new String();
+                                            StringWriter writer = new StringWriter();
+                                            Lang_WON.init();
+                                            Dataset dataset = null;
                                             String param = matcher.group(2);
                                             if ("agreements".equals(param)) {
-                                                // add data as file
-                                                // attachment to message
                                                 filePrefix = "agreementData";
-                                                dataSetString = RdfUtils.toString(agreementState.getAgreements());
+                                                dataset = agreementState.getAgreements();
                                             } else if ("proposals".equals(param)) {
                                                 filePrefix = "proposalData";
-                                                dataSetString = RdfUtils.toString(agreementState.getPendingProposals());
+                                                dataset = agreementState.getPendingProposals();
                                             } else if ("claims".equals(param)) {
                                                 filePrefix = "claimsData";
-                                                dataSetString = RdfUtils.toString(agreementState.getClaims());
+                                                dataset = agreementState.getClaims();
                                             } else {
                                                 throw new Exception("Second command param not known");
                                             }
-                                            if (dataSetString.length() < 1) {
+                                            if (dataset == null) {
                                                 return WonRdfUtils.MessageUtils.textMessage(
                                                                 "No " + param + " data found for this conversation");
                                             }
+                                            RDFDataMgr.write(writer, dataset,
+                                                            Lang_WON.TRIG_WON_CONVERSATION);
+                                            datasetString = writer.toString();
                                             Date date = new Date();
                                             String fileName = filePrefix + "-" + date.getTime() + ".trig";
-                                            byte[] fileContent = dataSetString.getBytes("UTF-8");
+                                            byte[] fileContent = datasetString.getBytes("UTF-8");
                                             String encodedString = Base64.getEncoder().encodeToString(fileContent);
                                             return WonRdfUtils.MessageUtils.fileMessage(encodedString, fileName,
                                                             "application/trig", successMessage);
